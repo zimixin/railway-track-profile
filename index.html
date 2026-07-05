@@ -587,7 +587,10 @@ canvas.edit-mode { cursor: crosshair; }
         <button class="btn btn-icon" id="zoomResetBtn" title="Сбросить">⟲</button>
                 <div class="topbar-sep"></div>
                 <button class="btn btn-icon" id="amoledBtn" title="AMOLED тема" style="font-size:13px;">🌙</button>
+                <button class="btn btn-primary" id="saveBtn">📥 Сохранить</button>
                 <button class="btn btn-primary" id="exportBtn">💾 Экспорт</button>
+                <button class="btn btn-primary" id="importBtn">📂 Загрузить</button>
+                <input type="file" id="importInput" accept=".json" style="display:none">
     </div>
 </div>
 
@@ -1297,6 +1300,7 @@ function saveSnapshot() {
     history.stack.push(JSON.parse(JSON.stringify(state.data)));
     if (history.stack.length > history.maxSize) history.stack.shift();
     history.index = history.stack.length - 1;
+    saveToLocalStorage();
 }
 
 function undo() {
@@ -2791,10 +2795,60 @@ document.addEventListener('keydown', (e) => {
 });
 
 // ============================================================
-// EXPORT
+// SAVE / LOAD / EXPORT
 // ============================================================
+
+// localStorage key
+const STORAGE_KEY = 'railway_track_profile_data';
+
+function saveToLocalStorage() {
+    try {
+        const data = {
+            _version: '0.0.1',
+            _savedAt: new Date().toISOString(),
+            ...state.data
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    } catch (e) {
+        console.warn('localStorage save failed:', e);
+    }
+}
+
+function loadFromLocalStorage() {
+    try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return false;
+        const parsed = JSON.parse(raw);
+        // Strip meta fields
+        delete parsed._version;
+        delete parsed._savedAt;
+        // Validate basic structure
+        const required = ['stations','signals','elevations','slopes','curves','recommendations'];
+        for (const key of required) {
+            if (!Array.isArray(parsed[key])) return false;
+        }
+        state.data = parsed;
+        return true;
+    } catch (e) {
+        return false;
+    }
+}
+
+function clearLocalStorage() {
+    localStorage.removeItem(STORAGE_KEY);
+}
+
+function buildExportData() {
+    return {
+        _version: '0.0.1',
+        _exportedAt: new Date().toISOString(),
+        ...state.data
+    };
+}
+
+// Export — download as JSON file
 document.getElementById('exportBtn').addEventListener('click', () => {
-    const json = JSON.stringify(state.data, null, 2);
+    const json = JSON.stringify(buildExportData(), null, 2);
     const blob = new Blob([json], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -2802,6 +2856,54 @@ document.getElementById('exportBtn').addEventListener('click', () => {
     a.download = `track_profile_${state.direction}.json`;
     a.click();
     URL.revokeObjectURL(url);
+});
+
+// Import — load from JSON file
+document.getElementById('importBtn').addEventListener('click', () => {
+    document.getElementById('importInput').click();
+});
+
+document.getElementById('importInput').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+        try {
+            const parsed = JSON.parse(ev.target.result);
+            const required = ['stations','signals','elevations','slopes','curves','recommendations'];
+            for (const key of required) {
+                if (!Array.isArray(parsed[key])) {
+                    throw new Error(`Файл повреждён: нет массива "${key}"`);
+                }
+            }
+            state.data = {
+                stations: parsed.stations,
+                signals: parsed.signals,
+                elevations: parsed.elevations,
+                slopes: parsed.slopes,
+                curves: parsed.curves,
+                recommendations: parsed.recommendations
+            };
+            saveSnapshot();
+            saveToLocalStorage();
+            ['stations','signals','elevations','slopes','curves','recommendations'].forEach(refreshEditorList);
+            draw();
+            updateStats();
+            document.getElementById('statusText').innerHTML = '✅ Загружено из файла';
+            setTimeout(() => updateStats(), 100);
+        } catch (err) {
+            showValidationError('Ошибка загрузки: ' + err.message);
+        }
+    };
+    reader.readAsText(file);
+    e.target.value = ''; // reset so same file can be re-imported
+});
+
+// Save — explicitly save to localStorage
+document.getElementById('saveBtn').addEventListener('click', () => {
+    saveToLocalStorage();
+    document.getElementById('statusText').innerHTML = '✅ Сохранено';
+    setTimeout(() => updateStats(), 100);
 });
 
 // ============================================================
@@ -2819,8 +2921,13 @@ function updateStats() {
 // ============================================================
 // INIT
 // ============================================================
-loadDemo();
+if (!loadFromLocalStorage()) {
+    loadDemo();
+}
 saveSnapshot();
+document.getElementById('statusText').innerHTML = state.data.stations.length
+    ? '✅ Восстановлено из сохранения'
+    : '⚡ Новый профиль';
 ['stations', 'signals', 'elevations', 'slopes', 'curves', 'recommendations'].forEach(refreshEditorList);
 draw();
 </script>
