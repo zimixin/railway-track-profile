@@ -18,7 +18,8 @@ const state = {
         slopes: [],
         curves: [],
         recommendations: [],
-        speedLimits: []
+        speedLimits: [],
+        crossings: []
     }
 };
 
@@ -60,6 +61,7 @@ function calcRange() {
     d.curves.forEach(cv => { if (cv.startPos < minKm) minKm = cv.startPos; if (cv.endPos > maxKm) maxKm = cv.endPos; });
     d.recommendations.forEach(rec => { if (rec.startPos < minKm) minKm = rec.startPos; if (rec.endPos > maxKm) maxKm = rec.endPos; });
     d.speedLimits.forEach(sl => { if (sl.startPos < minKm) minKm = sl.startPos; if (sl.endPos > maxKm) maxKm = sl.endPos; });
+    d.crossings.forEach(cr => { if (cr.position < minKm) minKm = cr.position; if (cr.position > maxKm) maxKm = cr.position; });
 
     if (!isFinite(minKm)) {
         // Нет данных — показать заглушку
@@ -102,6 +104,7 @@ function loadDemo() {
     state.data.curves = [];
     state.data.recommendations = [];
     state.data.speedLimits = [];
+    state.data.crossings = [];
 }
 
 // ============================================================
@@ -125,7 +128,7 @@ function undo() {
     state.data = JSON.parse(JSON.stringify(history.stack[history.index]));
     state.selectedId = null; state.selectedType = null;
     closeSelectedEditor();
-    ['stations', 'signals', 'elevations', 'slopes', 'curves', 'recommendations', 'speedLimits'].forEach(refreshEditorList);
+    ['stations', 'signals', 'elevations', 'slopes', 'curves', 'crossings', 'recommendations', 'speedLimits'].forEach(refreshEditorList);
     draw();
 }
 
@@ -135,7 +138,7 @@ function redo() {
     state.data = JSON.parse(JSON.stringify(history.stack[history.index]));
     state.selectedId = null; state.selectedType = null;
     closeSelectedEditor();
-    ['stations', 'signals', 'elevations', 'slopes', 'curves', 'recommendations', 'speedLimits'].forEach(refreshEditorList);
+    ['stations', 'signals', 'elevations', 'slopes', 'curves', 'crossings', 'recommendations', 'speedLimits'].forEach(refreshEditorList);
     draw();
 }
 
@@ -192,10 +195,10 @@ const canvasWrap = document.getElementById('canvasWrap');
 const MARGIN = { top: 80, right: 60, bottom: 60, left: 70 };
 const PROFILE_HEIGHT = 180;
 const KM_AXIS_HEIGHT = 50;   // horizontal axis with km/pk — placed BELOW profile
-const PLAN_HEIGHT = 70;
-const SLOPE_HEIGHT = 50;
-const SPEED_HEIGHT = 24;
-const SECTION_GAP = 30;
+const PLAN_HEIGHT = 40;
+const SLOPE_HEIGHT = 100;
+const SPEED_HEIGHT = 80;
+const SECTION_GAP = 20;
 
 // Y positions of each section
 function sectionY() {
@@ -275,6 +278,7 @@ function draw() {
     drawPlanPath(sy);
     drawSlopes(sy);
     drawSignals(sy);
+    drawCrossings(sy);
     drawRecommendations(sy);
     drawSpeedGraph(sy);
     drawDirectionArrow(sy);
@@ -300,7 +304,7 @@ function drawGrid(totalWidth, totalHeight, sy) {
     // Horizontal section separators
     ctx.strokeStyle = theme.border;
         ctx.lineWidth = 1;
-        [sy.profileBottom, sy.axisBottom, sy.planBottom, sy.slopeBottom].forEach(y => {
+        [sy.speedBottom, sy.profileBottom, sy.axisBottom, sy.planBottom, sy.slopeBottom].forEach(y => {
             ctx.beginPath();
             ctx.moveTo(MARGIN.left, y);
             ctx.lineTo(MARGIN.left + (state.endKm - state.startKm) * 10 * state.pxPerPK, y);
@@ -312,8 +316,8 @@ function drawGrid(totalWidth, totalHeight, sy) {
         ctx.font = '10px Segoe UI';
         ctx.textAlign = 'left';
         ctx.fillText('ПРОФИЛЬ ПУТИ', 10, sy.profileTop + 16);
-        ctx.fillText('ПЛАН ПУТИ', 10, sy.planTop + 16);
-        ctx.fillText('УКЛОНЫ', 10, sy.slopeTop + 16);
+        ctx.fillText('ПЛАН ПУТИ (КРИВЫЕ)', 10, sy.planTop + 16);
+        ctx.fillText('УКЛОНЫ (вычислено из профиля)', 10, sy.slopeTop + 16);
 }
 
 function drawProfile(sy) {
@@ -377,25 +381,6 @@ function drawProfile(sy) {
             ctx.stroke();
         }
     });
-
-    // Y axis labels
-    ctx.fillStyle = '#8b949e';
-    ctx.font = '9px Consolas, monospace';
-    ctx.textAlign = 'right';
-    for (let v = Math.ceil(minY); v <= Math.floor(maxY); v++) {
-        const normalizedY = (v - minY) / rangeY;
-        const y = sy.profileBottom - padding - normalizedY * (PROFILE_HEIGHT - 2 * padding);
-        ctx.fillText(v + 'м', MARGIN.left - 8, y + 3);
-        ctx.strokeStyle = '#161b22';
-        ctx.lineWidth = 0.5;
-        ctx.setLineDash([2, 4]);
-        ctx.beginPath();
-        ctx.moveTo(MARGIN.left, y);
-        ctx.lineTo(MARGIN.left + (state.endKm - state.startKm) * 10 * state.pxPerPK, y);
-        ctx.stroke();
-        ctx.setLineDash([]);
-    }
-    ctx.textAlign = 'left';
 }
 
 function drawKmAxis(sy) {
@@ -452,27 +437,99 @@ function drawKmAxis(sy) {
 }
 
 function drawSlopes(sy) {
-    state.data.slopes.forEach(slope => {
-        let x1 = positionToX(slope.startPos);
-        let x2 = positionToX(slope.endPos);
-        if (x2 < x1) { const t = x1; x1 = x2; x2 = t; }
+    const elevations = state.data.elevations;
+    if (elevations.length < 2) return;
 
-        const isSelected = state.selectedId === slope.id;
+    // Sort elevations by position
+    const sorted = [...elevations].sort((a, b) => a.position - b.position);
 
-        ctx.fillStyle = slope.direction === 'up' ? 'rgba(255, 167, 38, 0.15)' : 'rgba(66, 165, 245, 0.15)';
-        ctx.fillRect(x1, sy.slopeTop + 5, x2 - x1, SLOPE_HEIGHT - 15);
+    // Build segments between consecutive elevation points
+    const segments = [];
+    for (let i = 0; i < sorted.length - 1; i++) {
+        const p1 = sorted[i];
+        const p2 = sorted[i + 1];
+        const dx = Math.abs(p2.position - p1.position) * 1000; // meters
+        if (dx < 1) continue;
+        const dy = p2.y - p1.y;
+        const gradientPct = (dy / dx) * 100;
+        const gradientPermille = (dy / dx) * 1000;
+        const x1 = positionToX(p1.position);
+        const x2 = positionToX(p2.position);
+        if (Math.abs(x2 - x1) < 5) continue; // too narrow to draw
 
-        ctx.strokeStyle = isSelected ? '#58a6ff' : (slope.direction === 'up' ? '#ffa726' : '#42a5f5');
-        ctx.lineWidth = isSelected ? 2 : 1;
-        ctx.strokeRect(x1, sy.slopeTop + 5, x2 - x1, SLOPE_HEIGHT - 15);
+        segments.push({
+            x1: Math.min(x1, x2),
+            x2: Math.max(x1, x2),
+            length: Math.round(dx),
+            dy: dy,
+            gradientPermille: Math.round(gradientPermille * 10) / 10,
+            gradientPct: Math.round(gradientPct * 10) / 10,
+            direction: dy > 0.05 ? 'up' : (dy < -0.05 ? 'down' : 'flat')
+        });
+    }
 
-        const midX = (x1 + x2) / 2;
-        ctx.fillStyle = slope.direction === 'up' ? '#ffa726' : '#42a5f5';
-        ctx.font = 'bold 11px Consolas, monospace';
+    if (!segments.length) return;
+
+    // Draw each segment
+    segments.forEach(seg => {
+        const midX = (seg.x1 + seg.x2) / 2;
+
+        // Background fill
+        ctx.fillStyle = seg.direction === 'up' ? 'rgba(255,167,38,0.12)' :
+                        (seg.direction === 'down' ? 'rgba(66,165,245,0.12)' : 'rgba(139,148,158,0.08)');
+        ctx.fillRect(seg.x1, sy.slopeTop + 5, seg.x2 - seg.x1, SLOPE_HEIGHT - 15);
+
+        // Border
+        ctx.strokeStyle = seg.direction === 'up' ? '#ffa726' :
+                          (seg.direction === 'down' ? '#42a5f5' : '#8b949e');
+        ctx.lineWidth = 1;
+        ctx.strokeRect(seg.x1, sy.slopeTop + 5, seg.x2 - seg.x1, SLOPE_HEIGHT - 15);
+
+        // Separator line at each elevation point
+        ctx.strokeStyle = 'rgba(139,148,158,0.3)';
+        ctx.lineWidth = 0.5;
+        ctx.setLineDash([2, 3]);
+        ctx.beginPath();
+        ctx.moveTo(seg.x1, sy.slopeTop + 5);
+        ctx.lineTo(seg.x1, sy.slopeBottom - 5);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Direction arrow (top)
+        ctx.fillStyle = seg.direction === 'up' ? '#ffa726' :
+                        (seg.direction === 'down' ? '#42a5f5' : '#8b949e');
+        ctx.font = 'bold 16px Segoe UI';
         ctx.textAlign = 'center';
-        ctx.fillText(slope.gradient + '‰', midX, sy.slopeTop + 22);
-        ctx.font = '12px Segoe UI';
-        ctx.fillText(slope.direction === 'up' ? '↑' : '↓', midX, sy.slopeTop + 36);
+        if (seg.direction === 'up') {
+            ctx.fillText('↑', midX, sy.slopeTop + 22);
+        } else if (seg.direction === 'down') {
+            ctx.fillText('↓', midX, sy.slopeTop + 22);
+        } else {
+            ctx.fillText('—', midX, sy.slopeTop + 22);
+        }
+
+        // Gradient in % (upper area)
+        ctx.font = 'bold 11px Consolas, monospace';
+        const gradLabel = (seg.direction === 'up' ? '+' : (seg.direction === 'down' ? '' : '')) +
+                          seg.gradientPct + '%';
+        ctx.fillText(gradLabel, midX, sy.slopeTop + 40);
+
+        // Length in meters (lower area)
+        ctx.font = '10px Consolas, monospace';
+        ctx.fillStyle = '#8b949e';
+        ctx.fillText(seg.length + 'м', midX, sy.slopeTop + 60);
+
+        // Height difference (bottom)
+        ctx.font = '9px Consolas, monospace';
+        ctx.fillStyle = seg.direction === 'up' ? '#ffa726' : '#42a5f5';
+        const dyLabel = (seg.direction === 'up' ? '+' : '') + seg.dy.toFixed(1) + 'м';
+        ctx.fillText(dyLabel, midX, sy.slopeTop + 76);
+
+        // Also show per mille gradient in parentheses
+        ctx.font = '8px Consolas, monospace';
+        ctx.fillStyle = '#6e7681';
+        ctx.fillText('(' + seg.gradientPermille + '‰)', midX, sy.slopeTop + 88);
+
         ctx.textAlign = 'left';
     });
 }
@@ -566,11 +623,11 @@ function drawStations(sy) {
         ctx.stroke();
         ctx.setLineDash([]);
 
-        // Station label
+        // Station label — above the speed section
         ctx.font = 'bold 11px Segoe UI';
         const labelWidth = Math.max(ctx.measureText(station.name).width + 20, 80);
         const labelX = x - labelWidth / 2;
-        const labelY = sy.profileTop - 38;
+        const labelY = sy.speedTop - 35;
 
         ctx.fillStyle = isSelected ? '#2ea043' : '#238636';
         roundRect(ctx, labelX, labelY, labelWidth, 22, 4);
@@ -647,6 +704,56 @@ function drawSignals(sy) {
             ctx.setLineDash([3, 3]);
             ctx.beginPath();
             ctx.arc(x, y, 12, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+        ctx.textAlign = 'left';
+    });
+}
+
+function drawCrossings(sy) {
+    const crossings = state.data.crossings;
+    const yBase = sy.profileTop;
+    const y = yBase + PROFILE_HEIGHT - 20;
+
+    crossings.forEach(cr => {
+        const x = positionToX(cr.position);
+        const isSelected = state.selectedId === cr.id;
+
+        // Vertical line
+        ctx.strokeStyle = '#e53935';
+        ctx.lineWidth = isSelected ? 2 : 1;
+        ctx.beginPath();
+        ctx.moveTo(x, yBase + 40);
+        ctx.lineTo(x, y);
+        ctx.stroke();
+
+        // Red-white diamond (◆) — draw filled red with white border
+        const sz = 7;
+        ctx.beginPath();
+        ctx.moveTo(x, y - sz);
+        ctx.lineTo(x + sz, y);
+        ctx.lineTo(x, y + sz);
+        ctx.lineTo(x - sz, y);
+        ctx.closePath();
+        ctx.fillStyle = '#e53935';
+        ctx.fill();
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Label
+        ctx.fillStyle = '#e53935';
+        ctx.font = 'bold 11px Consolas, monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText(cr.label || 'Переезд', x, yBase + 36);
+
+        if (isSelected) {
+            ctx.strokeStyle = '#58a6ff';
+            ctx.lineWidth = 1.5;
+            ctx.setLineDash([3, 3]);
+            ctx.beginPath();
+            ctx.arc(x, y, 14, 0, Math.PI * 2);
             ctx.stroke();
             ctx.setLineDash([]);
         }
@@ -803,41 +910,43 @@ function drawSpeedGraph(sy) {
     ctx.textAlign = 'left';
     ctx.fillText('СКОРОСТИ', 10, sy.speedTop + 14);
 
-    // Y-axis on right side
+    // Y-axis on left side with speed values
     ctx.fillStyle = theme.axisLabel;
     ctx.font = '8px Consolas, monospace';
     ctx.textAlign = 'right';
-    const ySteps = [0, 25, 50, 75, 100, 120, 140];
-    ySteps.forEach(s => {
-        if (s > maxSpeed) return;
+    // Auto-compute nice step values
+    let maxTick = Math.ceil(maxSpeed / 10) * 10;
+    if (maxTick < 20) maxTick = 20;
+    const step = maxTick <= 40 ? 10 : (maxTick <= 80 ? 20 : (maxTick <= 120 ? 25 : 30));
+    for (let s = 0; s <= maxTick; s += step) {
+        if (s > maxSpeed * 1.15) break;
         const y = yBottom - (s / speedRange) * bandH;
-        ctx.fillText(s + '', baseX2 + 8, y + 3);
+        ctx.fillText(s + '', MARGIN.left - 6, y + 3);
         // Grid line
         ctx.strokeStyle = 'rgba(48,54,61,0.3)';
         ctx.lineWidth = 0.3;
         ctx.setLineDash([2, 3]);
         ctx.beginPath();
-        ctx.moveTo(baseX1, y);
+        ctx.moveTo(MARGIN.left, y);
         ctx.lineTo(baseX2, y);
         ctx.stroke();
         ctx.setLineDash([]);
-    });
+    }
     ctx.textAlign = 'left';
 
-    // "км/ч" label on Y-axis
+    // "км/ч" label on left Y-axis
     ctx.fillStyle = theme.axisLabel;
     ctx.font = '7px Segoe UI';
-    ctx.textAlign = 'left';
-    ctx.fillText('км/ч', baseX2 + 8, yTop + 8);
+    ctx.fillText('км/ч', MARGIN.left - 6, yTop + 10);
 
     // Build stepped line points
     // Sort limits by startPos
     const sorted = [...limits].sort((a, b) => a.startPos - b.startPos);
     const points = [];
     sorted.forEach(l => {
-        const x1 = positionToX(l.startPos);
-        const x2 = positionToX(l.endPos);
-        if (x2 <= x1) return;
+        let x1 = positionToX(l.startPos);
+        let x2 = positionToX(l.endPos);
+        if (x2 < x1) { const t = x1; x1 = x2; x2 = t; }
         const y = yBottom - (l.speed / speedRange) * bandH;
         points.push({ x: x1, y, speed: l.speed, id: l.id });
         points.push({ x: x2, y, speed: l.speed, id: l.id });
@@ -863,9 +972,15 @@ function drawSpeedGraph(sy) {
         // Vertical step line at start (connecting to previous segment)
         if (i > 0) {
             const prev = points[i - 1];
+            // Horizontal connector from previous segment end to this segment start
             ctx.strokeStyle = theme.axisLabel;
             ctx.lineWidth = 0.5;
             ctx.setLineDash([2, 3]);
+            ctx.beginPath();
+            ctx.moveTo(prev.x, prev.y);
+            ctx.lineTo(p1.x, prev.y);
+            ctx.stroke();
+            // Vertical step at this segment's start
             ctx.beginPath();
             ctx.moveTo(p1.x, prev.y);
             ctx.lineTo(p1.x, p1.y);
@@ -907,7 +1022,7 @@ function drawSpeedGraph(sy) {
 }
 
 function drawDirectionArrow(sy) {
-    const y = sy.profileTop - 5;
+    const y = sy.speedBottom + 4;
     const range = state.endKm - state.startKm;
     const x1 = MARGIN.left + 20;
     const x2 = MARGIN.left + range * 10 * state.pxPerPK - 20;
@@ -1005,7 +1120,7 @@ function findStationAt(mx, my) {
     const sy = sectionY();
     for (const st of state.data.stations) {
         const x = positionToX(st.position);
-        const labelY = sy.profileTop - 38;
+        const labelY = sy.speedTop - 35;
         if (mx > x - 60 && mx < x + 60 && my > labelY && my < labelY + 22) return st;
     }
     return null;
@@ -1037,12 +1152,77 @@ function findSpeedLimitAt(mx, my) {
     return null;
 }
 
+function findCrossingAt(mx, my) {
+    if (!state.editMode) return null;
+    const sy = sectionY();
+    const y = sy.profileTop + PROFILE_HEIGHT - 20;
+    for (const cr of state.data.crossings) {
+        const x = positionToX(cr.position);
+        if (Math.hypot(mx - x, my - y) < 10) return cr;
+    }
+    return null;
+}
+
+function findStationBoundaryAt(mx, my) {
+    if (!state.editMode) return null;
+    const sy = sectionY();
+    for (const st of state.data.stations) {
+        const xStart = positionToX(st.start);
+        const xEnd = positionToX(st.end);
+        const xPos = positionToX(st.position);
+        if (Math.abs(mx - xStart) < 8 && my >= sy.profileTop && my <= sy.slopeBottom) {
+            return { type: 'start', item: st };
+        }
+        if (Math.abs(mx - xEnd) < 8 && my >= sy.profileTop && my <= sy.slopeBottom) {
+            return { type: 'end', item: st };
+        }
+    }
+    return null;
+}
+
+function findCurveBoundaryAt(mx, my) {
+    if (!state.editMode) return null;
+    const sy = sectionY();
+    const baseY = sy.planTop + PLAN_HEIGHT / 2;
+    for (const cv of state.data.curves) {
+        const x1 = positionToX(cv.startPos);
+        const x2 = positionToX(cv.endPos);
+        if (Math.abs(mx - x1) < 8 && Math.abs(my - baseY) < 20) {
+            return { type: 'start', item: cv };
+        }
+        if (Math.abs(mx - x2) < 8 && Math.abs(my - baseY) < 20) {
+            return { type: 'end', item: cv };
+        }
+    }
+    return null;
+}
+
+function findSpeedBoundaryAt(mx, my) {
+    if (!state.editMode) return null;
+    const sy = sectionY();
+    const yTop = sy.speedTop + 2;
+    const yBottom = sy.speedBottom - 2;
+    for (const sp of state.data.speedLimits) {
+        const x1 = positionToX(sp.startPos);
+        const x2 = positionToX(sp.endPos);
+        if (Math.abs(mx - x1) < 8 && my >= yTop - 4 && my <= yBottom + 4) {
+            return { type: 'start', item: sp };
+        }
+        if (Math.abs(mx - x2) < 8 && my >= yTop - 4 && my <= yBottom + 4) {
+            return { type: 'end', item: sp };
+        }
+    }
+    return null;
+}
+
 canvas.addEventListener('mousedown', (e) => {
     if (!state.editMode) return;
     const { x, y } = getMousePos(e);
+
+    // Try to find a drag target
     const pt = findElevationAt(x, y);
     if (pt) {
-        state.dragging = pt;
+        state.dragging = { type: 'elevation', item: pt };
         // Заморозить ось Y на момент начала перетаскивания
         const elevations = state.data.elevations;
         const ys = elevations.map(e => e.y);
@@ -1050,6 +1230,47 @@ canvas.addEventListener('mousedown', (e) => {
         state.dragAxisMax = Math.max(...ys) + 1;
         selectItem('elevations', pt.id, false);
         canvas.style.cursor = 'grabbing';
+        return;
+    }
+
+    const sig = findSignalAt(x, y);
+    if (sig) {
+        state.dragging = { type: 'signal', item: sig, field: 'position' };
+        selectItem('signals', sig.id, false);
+        canvas.style.cursor = 'grabbing';
+        return;
+    }
+
+    const cr = findCrossingAt(x, y);
+    if (cr) {
+        state.dragging = { type: 'crossing', item: cr, field: 'position' };
+        selectItem('crossings', cr.id, false);
+        canvas.style.cursor = 'grabbing';
+        return;
+    }
+
+    const stBound = findStationBoundaryAt(x, y);
+    if (stBound) {
+        state.dragging = { type: 'stationBoundary', item: stBound.item, field: stBound.type === 'start' ? 'start' : 'end' };
+        selectItem('stations', stBound.item.id, false);
+        canvas.style.cursor = 'grabbing';
+        return;
+    }
+
+    const cvBound = findCurveBoundaryAt(x, y);
+    if (cvBound) {
+        state.dragging = { type: 'curveBoundary', item: cvBound.item, field: cvBound.type === 'start' ? 'startPos' : 'endPos' };
+        selectItem('curves', cvBound.item.id, false);
+        canvas.style.cursor = 'grabbing';
+        return;
+    }
+
+    const spBound = findSpeedBoundaryAt(x, y);
+    if (spBound) {
+        state.dragging = { type: 'speedBoundary', item: spBound.item, field: spBound.type === 'start' ? 'startPos' : 'endPos' };
+        selectItem('speedLimits', spBound.item.id, false);
+        canvas.style.cursor = 'grabbing';
+        return;
     }
 });
 
@@ -1059,16 +1280,20 @@ canvas.addEventListener('mousemove', (e) => {
     if (state.dragging) {
         const newPos = xToPosition(x);
         const clamped = Math.max(state.startKm, Math.min(state.endKm, newPos));
-        // Snap to 1m precision
-        state.dragging.position = Math.round(clamped * 1000) / 1000;
+        const rounded = Math.round(clamped * 1000) / 1000;
 
-        const sy = sectionY();
-        const padding = 20;
-        const axisMin = state.dragAxisMin;
-        const axisMax = state.dragAxisMax;
-        const rangeY = (axisMax - axisMin) || 1;
-        const normalizedY = Math.min(1, Math.max(0, 1 - (y - (sy.profileTop + padding)) / (PROFILE_HEIGHT - 2 * padding)));
-        state.dragging.y = Math.round((axisMin + normalizedY * rangeY) * 10) / 10;
+        if (state.dragging.type === 'elevation') {
+            state.dragging.item.position = rounded;
+            const sy = sectionY();
+            const padding = 20;
+            const axisMin = state.dragAxisMin;
+            const axisMax = state.dragAxisMax;
+            const rangeY = (axisMax - axisMin) || 1;
+            const normalizedY = Math.min(1, Math.max(0, 1 - (y - (sy.profileTop + padding)) / (PROFILE_HEIGHT - 2 * padding)));
+            state.dragging.item.y = Math.round((axisMin + normalizedY * rangeY) * 10) / 10;
+        } else {
+            state.dragging.item[state.dragging.field] = rounded;
+        }
         draw();
         updateSelectedEditorFields();
         return;
@@ -1077,40 +1302,64 @@ canvas.addEventListener('mousemove', (e) => {
     if (state.editMode) {
         const pt = findElevationAt(x, y);
         const sig = !pt ? findSignalAt(x, y) : null;
-        const st = !pt && !sig ? findStationAt(x, y) : null;
-        const rec = !pt && !sig && !st ? findRecommendationAt(x, y) : null;
-        const sp = !pt && !sig && !st && !rec ? findSpeedLimitAt(x, y) : null;
-        canvas.style.cursor = (pt || sig || st || rec || sp) ? 'pointer' : 'crosshair';
+        const cr = !pt && !sig ? findCrossingAt(x, y) : null;
+        const st = !pt && !sig && !cr ? findStationAt(x, y) : null;
+        const rec = !pt && !sig && !cr && !st ? findRecommendationAt(x, y) : null;
+        const sp = !pt && !sig && !cr && !st && !rec ? findSpeedLimitAt(x, y) : null;
+        const anyBound = !pt && !sig && !cr && !st && !rec && !sp
+            ? (findStationBoundaryAt(x, y) || findCurveBoundaryAt(x, y) || findSpeedBoundaryAt(x, y))
+            : null;
+        canvas.style.cursor = (pt || sig || cr || st || rec || sp || anyBound) ? 'pointer' : 'crosshair';
 
         const tooltip = document.getElementById('tooltip');
         if (pt) {
-            // Calculate gradient to next point
             const elevs = state.data.elevations;
             const idx = elevs.indexOf(pt);
             let gradStr = '';
             if (idx >= 0 && idx < elevs.length - 1) {
                 const next = elevs[idx + 1];
                 const dy = next.y - pt.y;
-                const dx = (next.position - pt.position) * 1000; // meters
+                const dx = (next.position - pt.position) * 1000;
                 if (dx !== 0) {
                     const grad = (dy / dx * 100).toFixed(1);
-                    const dir = dy > 0 ? '↑' : '↓';
-                    gradStr = `<div class="tt-row"><span>Уклон:</span><span class="tt-val">${dir} ${Math.abs(grad)}%</span></div>`;
+                    const dir = dy > 0 ? '\u2191' : '\u2193';
+                    gradStr = `<div class="tt-row"><span>\u0423\u043A\u043B\u043E\u043D:</span><span class="tt-val">${dir} ${Math.abs(grad)}%</span></div>`;
                 }
             }
-            tooltip.innerHTML = `<b>Точка рельефа</b><div class="tt-row"><span>Позиция:</span><span class="tt-val">${formatPos(pt.position)}</span></div><div class="tt-row"><span>Высота:</span><span class="tt-val">${pt.y} м</span></div>${gradStr}`;
+            tooltip.innerHTML = `<b>\u0422\u043E\u0447\u043A\u0430 \u0440\u0435\u043B\u044C\u0435\u0444\u0430</b><div class="tt-row"><span>\u041F\u043E\u0437\u0438\u0446\u0438\u044F:</span><span class="tt-val">${formatPos(pt.position)}</span></div><div class="tt-row"><span>\u0412\u044B\u0441\u043E\u0442\u0430:</span><span class="tt-val">${pt.y} \u043C</span></div>${gradStr}`;
             showTooltip(e, tooltip);
         } else if (sig) {
-            tooltip.innerHTML = `<b>Сигнал ${sig.label}</b><div class="tt-row"><span>Позиция:</span><span class="tt-val">${formatPos(sig.position)}</span></div>${sig.station ? `<div class="tt-row"><span>Станция:</span><span class="tt-val">${sig.station}</span></div>` : ''}`;
+            tooltip.innerHTML = `<b>\u0421\u0438\u0433\u043D\u0430\u043B ${sig.label}</b><div class="tt-row"><span>\u041F\u043E\u0437\u0438\u0446\u0438\u044F:</span><span class="tt-val">${formatPos(sig.position)}</span></div>${sig.station ? `<div class="tt-row"><span>\u0421\u0442\u0430\u043D\u0446\u0438\u044F:</span><span class="tt-val">${sig.station}</span></div>` : ''}`;
+            showTooltip(e, tooltip);
+        } else if (cr) {
+            tooltip.innerHTML = `<b>\u041F\u0435\u0440\u0435\u0435\u0437\u0434</b><div class="tt-row"><span>\u041F\u043E\u0437\u0438\u0446\u0438\u044F:</span><span class="tt-val">${formatPos(cr.position)}</span></div>${cr.label ? `<div class="tt-row"><span>\u041D\u0430\u0437\u0432\u0430\u043D\u0438\u0435:</span><span class="tt-val">${cr.label}</span></div>` : ''}`;
             showTooltip(e, tooltip);
         } else if (st) {
-            tooltip.innerHTML = `<b>${st.name}</b><div class="tt-row"><span>Позиция:</span><span class="tt-val">${formatPos(st.position)}</span></div><div class="tt-row"><span>Границы:</span><span class="tt-val">${formatPos(st.start)} — ${formatPos(st.end)}</span></div>`;
+            tooltip.innerHTML = `<b>${st.name}</b><div class="tt-row"><span>\u041F\u043E\u0437\u0438\u0446\u0438\u044F:</span><span class="tt-val">${formatPos(st.position)}</span></div><div class="tt-row"><span>\u0413\u0440\u0430\u043D\u0438\u0446\u044B:</span><span class="tt-val">${formatPos(st.start)} &mdash; ${formatPos(st.end)}</span></div>`;
             showTooltip(e, tooltip);
         } else if (rec) {
-            tooltip.innerHTML = `<b>Рекомендация</b><div class="tt-row"><span>От:</span><span class="tt-val">${formatPos(rec.startPos)}</span></div><div class="tt-row"><span>До:</span><span class="tt-val">${formatPos(rec.endPos)}</span></div><div style="margin-top:4px;color:#c9d1d9;">${rec.text}</div>`;
+            tooltip.innerHTML = `<b>\u0420\u0435\u043A\u043E\u043C\u0435\u043D\u0434\u0430\u0446\u0438\u044F</b><div class="tt-row"><span>\u041E\u0442:</span><span class="tt-val">${formatPos(rec.startPos)}</span></div><div class="tt-row"><span>\u0414\u043E:</span><span class="tt-val">${formatPos(rec.endPos)}</span></div><div style="margin-top:4px;color:#c9d1d9;">${rec.text}</div>`;
             showTooltip(e, tooltip);
         } else if (sp) {
-            tooltip.innerHTML = `<b>Ограничение скорости</b><div class="tt-row"><span>От:</span><span class="tt-val">${formatPos(sp.startPos)}</span></div><div class="tt-row"><span>До:</span><span class="tt-val">${formatPos(sp.endPos)}</span></div><div class="tt-row"><span>Скорость:</span><span class="tt-val">${sp.speed} км/ч</span></div>${sp.remark ? `<div style="margin-top:4px;color:#c9d1d9;">${sp.remark}</div>` : ''}`;
+            tooltip.innerHTML = `<b>\u041E\u0433\u0440\u0430\u043D\u0438\u0447\u0435\u043D\u0438\u0435 \u0441\u043A\u043E\u0440\u043E\u0441\u0442\u0438</b><div class="tt-row"><span>\u041E\u0442:</span><span class="tt-val">${formatPos(sp.startPos)}</span></div><div class="tt-row"><span>\u0414\u043E:</span><span class="tt-val">${formatPos(sp.endPos)}</span></div><div class="tt-row"><span>\u0421\u043A\u043E\u0440\u043E\u0441\u0442\u044C:</span><span class="tt-val">${sp.speed} \u043A\u043C/\u0447</span></div>${sp.remark ? `<div style="margin-top:4px;color:#c9d1d9;">${sp.remark}</div>` : ''}`;
+            showTooltip(e, tooltip);
+        } else if (anyBound) {
+            const bound = anyBound;
+            const item = bound.item;
+            const field = bound.type === 'start' ? 'start' : 'end';
+            let typeName = '';
+            let fieldVal = '';
+            if (item.name !== undefined) {
+                typeName = '\u0421\u0442\u0430\u043D\u0446\u0438\u044F ' + item.name;
+                fieldVal = formatPos(field === 'start' ? item.start : item.end);
+            } else if (item.radius !== undefined) {
+                typeName = '\u041A\u0440\u0438\u0432\u0430\u044F R=' + item.radius;
+                fieldVal = formatPos(field === 'start' ? item.startPos : item.endPos);
+            } else if (item.speed !== undefined) {
+                typeName = '\u0421\u043A\u043E\u0440\u043E\u0441\u0442\u044C ' + item.speed + ' \u043A\u043C/\u0447';
+                fieldVal = formatPos(field === 'start' ? item.startPos : item.endPos);
+            }
+            tooltip.innerHTML = `<b>${typeName}</b><div class="tt-row"><span>${bound.type === 'start' ? '\u041D\u0430\u0447\u0430\u043B\u043E' : '\u041A\u043E\u043D\u0435\u0446'}:</span><span class="tt-val">${fieldVal}</span></div><div style="color:#ffa726;font-size:9px;margin-top:2px;">\u27F7 \u043F\u0435\u0440\u0435\u0442\u0430\u0449\u0438\u0442\u0435 \u0433\u0440\u0430\u043D\u0438\u0446\u0443</div>`;
             showTooltip(e, tooltip);
         } else {
             tooltip.style.display = 'none';
@@ -1122,11 +1371,29 @@ canvas.addEventListener('mousemove', (e) => {
 
 canvas.addEventListener('mouseup', () => {
     if (state.dragging) {
+        const type = state.dragging.type;
+        let listType = 'elevations';
+        if (type === 'signal') listType = 'signals';
+        else if (type === 'crossing') listType = 'crossings';
+        else if (type === 'stationBoundary') listType = 'stations';
+        else if (type === 'curveBoundary') listType = 'curves';
+        else if (type === 'speedBoundary') listType = 'speedLimits';
+        else if (type === 'elevation') listType = 'elevations';
+
         state.dragging = null;
         canvas.style.cursor = state.editMode ? 'crosshair' : 'default';
-        state.data.elevations.sort((a, b) => a.position - b.position);
+
+        if (type === 'elevation') {
+            state.data.elevations.sort((a, b) => a.position - b.position);
+        } else if (type === 'curveBoundary') {
+            state.data.curves.sort((a, b) => a.startPos - b.startPos);
+        } else if (type === 'speedBoundary') {
+            state.data.speedLimits.sort((a, b) => a.startPos - b.startPos);
+        } else if (type === 'stationBoundary') {
+            state.data.stations.sort((a, b) => a.position - b.position);
+        }
         draw();
-        refreshEditorList('elevations');
+        refreshEditorList(listType);
     }
 });
 
@@ -1141,10 +1408,18 @@ canvas.addEventListener('click', (e) => {
         if (sig) { selectItem('signals', sig.id, true); return; }
         const st = findStationAt(x, y);
         if (st) { selectItem('stations', st.id, true); return; }
+        const cr = findCrossingAt(x, y);
+        if (cr) { selectItem('crossings', cr.id, true); return; }
         const rec = findRecommendationAt(x, y);
         if (rec) { selectItem('recommendations', rec.id, true); return; }
         const sp = findSpeedLimitAt(x, y);
         if (sp) { selectItem('speedLimits', sp.id, true); return; }
+        const stBound = findStationBoundaryAt(x, y);
+        if (stBound) { selectItem('stations', stBound.item.id, true); return; }
+        const cvBound = findCurveBoundaryAt(x, y);
+        if (cvBound) { selectItem('curves', cvBound.item.id, true); return; }
+        const spBound = findSpeedBoundaryAt(x, y);
+        if (spBound) { selectItem('speedLimits', spBound.item.id, true); return; }
 
         // Точечное нанесение рельефа — клик на профиле
         const activeTab = document.querySelector('.editor-tab.active');
@@ -1237,7 +1512,7 @@ function findItemById(type, id) {
 }
 
 function showSelectedEditor(type, id) {
-    ['stations', 'signals', 'elevations', 'slopes', 'curves', 'recommendations', 'speedLimits'].forEach(t => {
+    ['stations', 'signals', 'elevations', 'slopes', 'curves', 'crossings', 'recommendations', 'speedLimits'].forEach(t => {
         document.getElementById('sel-' + t).classList.remove('active');
     });
     if (!id) return;
@@ -1313,13 +1588,18 @@ function updateSelectedEditorFields() {
             document.getElementById('sel-sp-end-m').value = e.m;
             document.getElementById('sel-sp-speed').value = item.speed || 60;
             document.getElementById('sel-sp-remark').value = item.remark || '';
+        } else if (t === 'crossings') {
+            const p = fromPos(item.position);
+            document.getElementById('sel-cr-name').value = item.label || '';
+            document.getElementById('sel-cr-km').value = p.km;
+            document.getElementById('sel-cr-m').value = p.m;
         }
 }
 
 function closeSelectedEditor() {
     state.selectedId = null;
     state.selectedType = null;
-    ['stations', 'signals', 'elevations', 'slopes', 'curves', 'recommendations', 'speedLimits'].forEach(t => {
+    ['stations', 'signals', 'elevations', 'slopes', 'curves', 'crossings', 'recommendations', 'speedLimits'].forEach(t => {
         document.getElementById('sel-' + t).classList.remove('active');
     });
     refreshCurrentList();
@@ -1442,6 +1722,20 @@ document.querySelector('[data-save="curves"]').addEventListener('click', () => {
     delete item._skm; delete item._sm; delete item._ekm; delete item._em;
     state.data.curves.sort((a, b) => a.startPos - b.startPos);
     refreshEditorList('curves');
+    draw();
+});
+
+setupSaveHandler('crossings', [
+    ['sel-cr-name', 'label'],
+    ['sel-cr-km', '_km', parseInt],
+    ['sel-cr-m', '_m', parseInt]
+]);
+document.querySelector('[data-save="crossings"]').addEventListener('click', () => {
+    const item = findItemById('crossings', state.selectedId);
+    if (!item) return;
+    item.position = toPos(item._km, item._m);
+    delete item._km; delete item._m;
+    refreshEditorList('crossings');
     draw();
 });
 
@@ -1666,13 +1960,27 @@ document.getElementById('addSpeedBtn').addEventListener('click', () => {
     selectItem('speedLimits', sp.id, true);
 });
 
+// Add crossing button
+document.getElementById('addCrossingBtn').addEventListener('click', () => {
+    const cr = {
+        id: newId(),
+        position: readKmM('cr-km', 'cr-m'),
+        label: document.getElementById('cr-name').value || ''
+    };
+    state.data.crossings.push(cr);
+    saveSnapshot();
+    refreshEditorList('crossings');
+    selectItem('crossings', cr.id, true);
+});
+
 // ============================================================
 // LISTS
 // ============================================================
 function refreshEditorList(type) {
     const listIdMap = {
         stations: 'stationsList', signals: 'signalsList', elevations: 'elevationsList',
-        slopes: 'slopesList', curves: 'curvesList', recommendations: 'recommendationsList'
+        slopes: 'slopesList', curves: 'curvesList', recommendations: 'recommendationsList',
+        speedLimits: 'speedLimitsList', crossings: 'crossingsList'
     };
     const typeColors = { passing: '#ffa726', input: '#66bb6a', maneuver: '#ab47bc', output: '#ef5350' };
     const categoryColors = { note: '#d29922', warning: '#f85149', restriction: '#a371f7', info: '#58a6ff' };
@@ -1717,6 +2025,7 @@ function renderColor(type, item, typeColors, categoryColors) {
     if (type === 'curves') return '#58a6ff';
     if (type === 'recommendations') return categoryColors[item.category] || '#d29922';
     if (type === 'speedLimits') return '#d29922';
+    if (type === 'crossings') return '#e53935';
     return '#8b949e';
 }
 
@@ -1736,6 +2045,9 @@ function renderLabel(type, item, typeColors, categoryColors) {
     if (type === 'speedLimits') {
         const remark = item.remark ? ` · ${item.remark}` : '';
         return `${formatPos(item.startPos)}→${formatPos(item.endPos)} · <b>${item.speed} км/ч</b>${remark}`;
+    }
+    if (type === 'crossings') {
+        return `${formatPos(item.position)}${item.label ? ' · ' + item.label : ''}`;
     }
     return '';
 }
@@ -1823,7 +2135,7 @@ function loadRoute(routeId) {
         badge.textContent = 'ЧЁТНОЕ';
         badge.className = 'direction-badge even';
     }
-    ['stations','signals','elevations','slopes','curves','recommendations','speedLimits'].forEach(refreshEditorList);
+    ['stations','signals','elevations','slopes','curves','crossings','recommendations','speedLimits'].forEach(refreshEditorList);
     closeSelectedEditor();
     updateStats();
     draw();
@@ -1841,7 +2153,7 @@ function loadTestData(routeId) {
     if (!data) return;
     saveSnapshot();
     // Merge sample data into current state
-    const types = ['elevations', 'signals', 'slopes', 'curves', 'recommendations', 'speedLimits'];
+    const types = ['elevations', 'signals', 'slopes', 'curves', 'crossings', 'recommendations', 'speedLimits'];
     types.forEach(type => {
         if (data[type]) {
             data[type].forEach(item => {
@@ -1957,7 +2269,7 @@ function loadFromLocalStorage() {
         delete parsed._savedAt;
         // Validate basic structure
         const required = ['stations','signals','elevations','slopes','curves','recommendations'];
-        const optional = ['speedLimits'];
+        const optional = ['speedLimits', 'crossings'];
         for (const key of required) {
             if (!Array.isArray(parsed[key])) return false;
         }
@@ -2007,24 +2319,25 @@ document.getElementById('importInput').addEventListener('change', (e) => {
     reader.onload = (ev) => {
         try {
             const parsed = JSON.parse(ev.target.result);
-            const required = ['stations','signals','elevations','slopes','curves','recommendations','speedLimits'];
-            for (const key of required) {
-                if (!Array.isArray(parsed[key])) {
-                    throw new Error(`Файл повреждён: нет массива "${key}"`);
-                }
-            }
-            state.data = {
-                stations: parsed.stations,
-                signals: parsed.signals,
-                elevations: parsed.elevations,
-                slopes: parsed.slopes,
-                curves: parsed.curves,
-                recommendations: parsed.recommendations,
-                speedLimits: parsed.speedLimits || []
-            };
-            saveSnapshot();
-            saveToLocalStorage();
-            ['stations','signals','elevations','slopes','curves','recommendations'].forEach(refreshEditorList);
+            const required = ['stations','signals','elevations','slopes','curves','recommendations','speedLimits','crossings'];
+                        for (const key of required) {
+                            if (!Array.isArray(parsed[key])) {
+                                throw new Error(`Файл повреждён: нет массива "${key}"`);
+                            }
+                        }
+                        state.data = {
+                            stations: parsed.stations,
+                            signals: parsed.signals,
+                            elevations: parsed.elevations,
+                            slopes: parsed.slopes,
+                            curves: parsed.curves,
+                            recommendations: parsed.recommendations,
+                            speedLimits: parsed.speedLimits || [],
+                            crossings: parsed.crossings || []
+                        };
+                        saveSnapshot();
+                        saveToLocalStorage();
+                        ['stations','signals','elevations','slopes','curves','recommendations','speedLimits','crossings'].forEach(refreshEditorList);
             draw();
             updateStats();
             document.getElementById('statusText').innerHTML = '✅ Загружено из файла';
@@ -2053,6 +2366,7 @@ function updateStats() {
     const sigCount = state.data.signals.filter(s => s.dir === state.direction || s.dir === 'both').length;
     document.getElementById('statSg').textContent = sigCount;
     document.getElementById('statSp').textContent = state.data.speedLimits.length;
+    document.getElementById('statCr').textContent = state.data.crossings.length;
     updateRouteLabel();
     updateRangeLabel();
 }
@@ -2067,7 +2381,7 @@ saveSnapshot();
 document.getElementById('statusText').innerHTML = state.data.stations.length
     ? '✅ Восстановлено из сохранения'
     : '⚡ Новый профиль';
-['stations', 'signals', 'elevations', 'slopes', 'curves', 'recommendations', 'speedLimits'].forEach(refreshEditorList);
+['stations', 'signals', 'elevations', 'slopes', 'curves', 'crossings', 'recommendations', 'speedLimits'].forEach(refreshEditorList);
 draw();
 
 // Register service worker for PWA offline support

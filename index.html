@@ -57,7 +57,8 @@
         </div>
         <div class="legend-body">
             <div class="legend-item"><div class="legend-swatch" style="background:#ef5350"></div> Профиль пути</div>
-            <div class="legend-item"><div class="legend-swatch" style="background:#ffa726"></div> Уклоны (‰)</div>
+            <div class="legend-item"><div class="legend-swatch" style="background:#ffa726"></div> Уклоны ↑ подъём (%, м)</div>
+            <div class="legend-item"><div class="legend-swatch" style="background:#42a5f5"></div> Уклоны ↓ спуск (%, м)</div>
             <div class="legend-item"><div class="legend-swatch" style="background:#66bb6a"></div> Станции</div>
             <div class="legend-item"><div class="legend-swatch" style="background:#58a6ff"></div> Кривые</div>
             <div style="height:6px"></div>
@@ -66,7 +67,11 @@
             <div class="legend-item"><span style="color:#ab47bc;font-weight:bold;font-size:12px;">◆</span>&nbsp;Маневровый</div>
             <div class="legend-item"><span style="color:#ef5350;font-weight:bold;font-size:12px;">■</span>&nbsp;Выходной</div>
             <div class="legend-item"><span style="color:#d29922;font-weight:bold;font-size:12px;">⚑</span>&nbsp;Рекомендация</div>
-            <div class="legend-item"><span style="background:#d29922;display:inline-block;width:14px;height:4px;border-radius:1px;vertical-align:middle;"></span>&nbsp;Скорости (км/ч)</div>
+            <div class="legend-item"><span style="color:#e53935;font-weight:bold;font-size:14px;">◆</span>&nbsp;Переезд</div>
+            <div class="legend-item"><span style="background:#2ea043;display:inline-block;width:14px;height:4px;border-radius:1px;vertical-align:middle;"></span>&nbsp;Скорость ≥120</div>
+            <div class="legend-item"><span style="background:#d29922;display:inline-block;width:14px;height:4px;border-radius:1px;vertical-align:middle;"></span>&nbsp;Скорость ≥80</div>
+            <div class="legend-item"><span style="background:#ffa726;display:inline-block;width:14px;height:4px;border-radius:1px;vertical-align:middle;"></span>&nbsp;Скорость ≥40</div>
+            <div class="legend-item"><span style="background:#ef5350;display:inline-block;width:14px;height:4px;border-radius:1px;vertical-align:middle;"></span>&nbsp;Скорость &lt;40</div>
         </div>
     </div>
 
@@ -88,6 +93,7 @@
             <button class="editor-tab" data-tab="elevations">Рельеф</button>
             <button class="editor-tab" data-tab="slopes">Уклоны</button>
             <button class="editor-tab" data-tab="curves">Кривые</button>
+            <button class="editor-tab" data-tab="crossings">Переезды</button>
             <button class="editor-tab" data-tab="recommendations">Рекомендации</button>
             <button class="editor-tab" data-tab="speedLimits">Скорости</button>
         </div>
@@ -505,6 +511,56 @@
                 </div>
             </div>
 
+            <!-- CROSSINGS -->
+            <div class="editor-section" id="sec-crossings">
+                <div class="section-title">Добавить переезд</div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>КМ</label>
+                        <input type="number" id="cr-km" value="0" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Метры (0-999)</label>
+                        <input type="number" id="cr-m" value="500" min="0" max="999">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Название</label>
+                        <input type="text" id="cr-name" value="">
+                    </div>
+                </div>
+                <button class="btn btn-primary" style="width:100%;justify-content:center;" id="addCrossingBtn">+ Добавить переезд</button>
+                <div class="section-title" style="margin-top:4px;">Список переездов</div>
+                <div class="item-list" id="crossingsList"></div>
+                <div class="selected-editor" id="sel-crossings">
+                    <div class="selected-editor-header">
+                        <div class="selected-editor-title">✎ Редактирование переезда</div>
+                        <button class="selected-editor-close" data-close="crossings">✕</button>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Название</label>
+                            <input type="text" id="sel-cr-name">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>КМ</label>
+                            <input type="number" id="sel-cr-km">
+                        </div>
+                        <div class="form-group">
+                            <label>Метры</label>
+                            <input type="number" id="sel-cr-m" min="0" max="999">
+                        </div>
+                    </div>
+                    <div class="selected-editor-actions">
+                        <button class="btn btn-ghost" data-cancel="crossings">Отмена</button>
+                        <button class="btn btn-primary" data-save="crossings">Сохранить</button>
+                    </div>
+                </div>
+            </div>
+
             <!-- RECOMMENDATIONS -->
             <div class="editor-section" id="sec-recommendations">
                             <div class="section-title">Добавить рекомендацию / заметку</div>
@@ -713,6 +769,7 @@
     <div class="status-item">Станций: <b id="statSt">0</b></div>
     <div class="status-item">Сигналов: <b id="statSg">0</b></div>
     <div class="status-item">Скоростей: <b id="statSp">0</b></div>
+    <div class="status-item">Переездов: <b id="statCr">0</b></div>
 </div>
 
 </body>
