@@ -148,6 +148,20 @@ body {
 .topbar-right { margin-left: auto; display: flex; gap: 8px; align-items: center; }
 .route-info { font-size: 12px; color: var(--text-secondary); }
 .route-info b { color: var(--text-primary); }
+.route-selector-wrap { display: flex; align-items: center; }
+.route-select {
+    padding: 4px 8px;
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text-primary);
+    font-size: 11px;
+    font-family: inherit;
+    max-width: 160px;
+    cursor: pointer;
+}
+.route-select:focus { outline: none; border-color: var(--accent-blue); }
+.route-select option { background: var(--bg-secondary); color: var(--text-primary); }
 
 /* ===== MAIN LAYOUT ===== */
 .main {

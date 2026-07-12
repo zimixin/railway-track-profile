@@ -1708,6 +1708,98 @@ function updateZoomLabel() {
 }
 
 // ============================================================
+// ROUTE PRESETS
+// ============================================================
+const ROUTES = {
+    'abdulino-kinel': {
+        name: 'Абдулино → Кинель',
+        direction: 'odd',
+        startKm: 127,
+        endKm: 154,
+        stations: [
+            { name: 'Абдулино', position: 127.5, start: 126.5, end: 128.5 },
+            { name: 'Асекеево', position: 133.0, start: 131.8, end: 134.2 },
+            { name: 'Бугуруслан', position: 140.3, start: 139.0, end: 141.8 },
+            { name: 'Похвистнево', position: 146.7, start: 145.5, end: 148.0 },
+            { name: 'Кинель', position: 153.2, start: 152.0, end: 154.0 }
+        ]
+    },
+    'kinel-abdulino': {
+        name: 'Кинель → Абдулино',
+        direction: 'even',
+        startKm: 127,
+        endKm: 154,
+        stations: [
+            { name: 'Кинель', position: 153.2, start: 152.0, end: 154.0 },
+            { name: 'Похвистнево', position: 146.7, start: 145.5, end: 148.0 },
+            { name: 'Бугуруслан', position: 140.3, start: 139.0, end: 141.8 },
+            { name: 'Асекеево', position: 133.0, start: 131.8, end: 134.2 },
+            { name: 'Абдулино', position: 127.5, start: 126.5, end: 128.5 }
+        ]
+    },
+    'ufa-chelyabinsk': {
+        name: 'Уфа → Челябинск',
+        direction: 'odd',
+        startKm: 0,
+        endKm: 40,
+        stations: [
+            { name: 'Уфа', position: 1.0, start: 0.0, end: 3.0 },
+            { name: 'Аша', position: 12.5, start: 11.0, end: 14.0 },
+            { name: 'Миньяр', position: 20.0, start: 18.5, end: 21.5 },
+            { name: 'Сим', position: 28.5, start: 27.0, end: 30.0 },
+            { name: 'Челябинск-Главный', position: 39.0, start: 37.0, end: 40.0 }
+        ]
+    },
+    'chelyabinsk-ufa': {
+        name: 'Челябинск → Уфа',
+        direction: 'even',
+        startKm: 0,
+        endKm: 40,
+        stations: [
+            { name: 'Челябинск-Главный', position: 39.0, start: 37.0, end: 40.0 },
+            { name: 'Сим', position: 28.5, start: 27.0, end: 30.0 },
+            { name: 'Миньяр', position: 20.0, start: 18.5, end: 21.5 },
+            { name: 'Аша', position: 12.5, start: 11.0, end: 14.0 },
+            { name: 'Уфа', position: 1.0, start: 0.0, end: 3.0 }
+        ]
+    }
+};
+
+function loadRoute(routeId) {
+    const route = ROUTES[routeId];
+    if (!route) return;
+    saveSnapshot();
+    loadDemo();
+    state.direction = route.direction;
+    state.startKm = route.startKm;
+    state.endKm = route.endKm;
+    route.stations.forEach(st => {
+        state.data.stations.push({ id: newId(), ...st });
+    });
+    state.data.stations.sort((a, b) => a.position - b.position);
+    const badge = document.getElementById('dirBadge');
+    if (state.direction === 'odd') {
+        badge.textContent = 'НЕЧЁТНОЕ';
+        badge.className = 'direction-badge odd';
+    } else {
+        badge.textContent = 'ЧЁТНОЕ';
+        badge.className = 'direction-badge even';
+    }
+    ['stations','signals','elevations','slopes','curves','recommendations','speedLimits'].forEach(refreshEditorList);
+    closeSelectedEditor();
+    updateStats();
+    draw();
+    document.getElementById('statusText').innerHTML = `✅ Маршрут: ${route.name}`;
+}
+
+document.getElementById('routeSelect').addEventListener('change', (e) => {
+    const val = e.target.value;
+    if (!val) return;
+    loadRoute(val);
+    e.target.value = ''; // reset to placeholder after loading
+});
+
+// ============================================================
 // AMOLED THEME TOGGLE
 // ============================================================
 document.getElementById('amoledBtn').addEventListener('click', () => {
