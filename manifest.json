@@ -3,12 +3,15 @@
   "short_name": "Профиль пути",
   "description": "Редактор продольного профиля железнодорожного пути",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
+  "orientation": "landscape",
   "background_color": "#0d1117",
   "theme_color": "#0d1117",
+  "categories": ["navigation", "utilities"],
   "icons": [
     {
-      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚂</text></svg>",
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🚂%3C/text%3E%3C/svg%3E",
       "sizes": "any",
       "type": "image/svg+xml"
     }
