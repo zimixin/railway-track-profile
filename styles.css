@@ -338,9 +338,27 @@ canvas.edit-mode { cursor: crosshair; }
     right: 0;
     top: 0;
     bottom: 0;
-    z-index: 10;
+    z-index: 100;
 }
 .editor-panel.open { transform: translateX(0); }
+.editor-drag-handle {
+    display: none;
+    height: 28px;
+    align-items: center;
+    justify-content: center;
+    cursor: grab;
+    flex-shrink: 0;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border);
+    touch-action: none;
+}
+.handle-bar {
+    width: 36px;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--text-muted);
+    opacity: 0.6;
+}
 .editor-header {
     padding: 14px 16px;
     border-bottom: 1px solid var(--border);
@@ -549,6 +567,7 @@ canvas.edit-mode { cursor: crosshair; }
     .topbar .btn { padding: 4px 8px; font-size: 11px; }
     .topbar .btn-icon { width: 28px; height: 28px; font-size: 14px; }
     .direction-badge { font-size: 9px; padding: 2px 8px; }
+    .route-select { max-width: 120px; font-size: 10px; }
     .editor-panel { width: 100%; max-width: 100%; }
     .editor-panel.open { transform: translateX(0); }
     .editor-body { padding: 8px; }
@@ -571,4 +590,34 @@ canvas.edit-mode { cursor: crosshair; }
     .editor-tab { min-width: 50px; padding: 6px 2px; font-size: 10px; }
     .legend { display: none; }
     .statusbar .status-item:nth-child(n+4) { display: none; }
+    /* Bottom sheet editor on mobile */
+    .editor-panel {
+        position: fixed;
+        left: 0;
+        right: 0;
+        top: auto;
+        bottom: 0;
+        width: 100%;
+        max-height: 65vh;
+        border-left: none;
+        border-top: 1px solid var(--border);
+        border-radius: 12px 12px 0 0;
+        transform: translateY(100%);
+        box-shadow: 0 -8px 32px rgba(0,0,0,0.5);
+    }
+    .editor-panel.open {
+        transform: translateY(0);
+    }
+    .editor-drag-handle {
+        display: flex;
+    }
+    .editor-body {
+        flex: 1;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        max-height: calc(65vh - 100px);
+    }
+    .item-list {
+        max-height: 120px;
+    }
 }
