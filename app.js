@@ -199,7 +199,9 @@ const SECTION_GAP = 30;
 
 // Y positions of each section
 function sectionY() {
-    const profileTop = MARGIN.top;
+    const speedTop = MARGIN.top;
+    const speedBottom = speedTop + SPEED_HEIGHT;
+    const profileTop = speedBottom + 4;
     const profileBottom = profileTop + PROFILE_HEIGHT;
     const axisTop = profileBottom;
     const axisBottom = axisTop + KM_AXIS_HEIGHT;
@@ -207,8 +209,6 @@ function sectionY() {
     const planBottom = planTop + PLAN_HEIGHT;
     const slopeTop = planBottom + SECTION_GAP;
     const slopeBottom = slopeTop + SLOPE_HEIGHT;
-    const speedTop = slopeBottom + SECTION_GAP;
-    const speedBottom = speedTop + SPEED_HEIGHT;
     return { profileTop, profileBottom, axisTop, axisBottom, planTop, planBottom, slopeTop, slopeBottom, speedTop, speedBottom };
 }
 
@@ -276,7 +276,7 @@ function draw() {
     drawSlopes(sy);
     drawSignals(sy);
     drawRecommendations(sy);
-    drawSpeedLimits(sy);
+    drawSpeedGraph(sy);
     drawDirectionArrow(sy);
 
     updateStats();
@@ -300,7 +300,7 @@ function drawGrid(totalWidth, totalHeight, sy) {
     // Horizontal section separators
     ctx.strokeStyle = theme.border;
         ctx.lineWidth = 1;
-        [sy.profileTop, sy.profileBottom, sy.axisBottom, sy.planBottom, sy.slopeBottom, sy.speedBottom].forEach(y => {
+        [sy.profileBottom, sy.axisBottom, sy.planBottom, sy.slopeBottom].forEach(y => {
             ctx.beginPath();
             ctx.moveTo(MARGIN.left, y);
             ctx.lineTo(MARGIN.left + (state.endKm - state.startKm) * 10 * state.pxPerPK, y);
@@ -314,10 +314,6 @@ function drawGrid(totalWidth, totalHeight, sy) {
         ctx.fillText('ПРОФИЛЬ ПУТИ', 10, sy.profileTop + 16);
         ctx.fillText('ПЛАН ПУТИ', 10, sy.planTop + 16);
         ctx.fillText('УКЛОНЫ', 10, sy.slopeTop + 16);
-        ctx.fillStyle = theme.sectionLabel;
-        ctx.font = '10px Segoe UI';
-        ctx.textAlign = 'left';
-        ctx.fillText('СКОРОСТИ', 10, sy.speedTop + 16);
 }
 
 function drawProfile(sy) {
@@ -771,7 +767,7 @@ function drawRecommendations(sy) {
     });
 }
 
-function drawSpeedLimits(sy) {
+function drawSpeedGraph(sy) {
     const limits = state.data.speedLimits;
     if (!limits.length) return;
 
@@ -782,61 +778,136 @@ function drawSpeedLimits(sy) {
         return '#ef5350';
     }
 
-    const bandH = SPEED_HEIGHT - 8;
-    const y = sy.speedTop + 4;
+    const yTop = sy.speedTop + 2;
+    const yBottom = sy.speedBottom - 2;
+    const bandH = yBottom - yTop;
     const baseX1 = MARGIN.left;
     const baseX2 = MARGIN.left + (state.endKm - state.startKm) * 10 * state.pxPerPK;
 
-    // Background track
+    // Find max speed for Y scale
+    let maxSpeed = 0;
+    limits.forEach(l => { if (l.speed > maxSpeed) maxSpeed = l.speed; });
+    maxSpeed = Math.max(maxSpeed, 10);
+    const speedRange = maxSpeed * 1.15; // 15% headroom
+
+    // Background
     ctx.fillStyle = isAmoled ? '#050505' : '#161b22';
-    ctx.fillRect(baseX1, y, baseX2 - baseX1, bandH);
+    ctx.fillRect(baseX1, yTop, baseX2 - baseX1, bandH);
     ctx.strokeStyle = theme.border;
     ctx.lineWidth = 0.5;
-    ctx.strokeRect(baseX1, y, baseX2 - baseX1, bandH);
+    ctx.strokeRect(baseX1, yTop, baseX2 - baseX1, bandH);
 
-    limits.forEach(limit => {
-        const x1 = positionToX(limit.startPos);
-        const x2 = positionToX(limit.endPos);
+    // Section label
+    ctx.fillStyle = theme.sectionLabel;
+    ctx.font = '10px Segoe UI';
+    ctx.textAlign = 'left';
+    ctx.fillText('СКОРОСТИ', 10, sy.speedTop + 14);
+
+    // Y-axis on right side
+    ctx.fillStyle = theme.axisLabel;
+    ctx.font = '8px Consolas, monospace';
+    ctx.textAlign = 'right';
+    const ySteps = [0, 25, 50, 75, 100, 120, 140];
+    ySteps.forEach(s => {
+        if (s > maxSpeed) return;
+        const y = yBottom - (s / speedRange) * bandH;
+        ctx.fillText(s + '', baseX2 + 8, y + 3);
+        // Grid line
+        ctx.strokeStyle = 'rgba(48,54,61,0.3)';
+        ctx.lineWidth = 0.3;
+        ctx.setLineDash([2, 3]);
+        ctx.beginPath();
+        ctx.moveTo(baseX1, y);
+        ctx.lineTo(baseX2, y);
+        ctx.stroke();
+        ctx.setLineDash([]);
+    });
+    ctx.textAlign = 'left';
+
+    // "км/ч" label on Y-axis
+    ctx.fillStyle = theme.axisLabel;
+    ctx.font = '7px Segoe UI';
+    ctx.textAlign = 'left';
+    ctx.fillText('км/ч', baseX2 + 8, yTop + 8);
+
+    // Build stepped line points
+    // Sort limits by startPos
+    const sorted = [...limits].sort((a, b) => a.startPos - b.startPos);
+    const points = [];
+    sorted.forEach(l => {
+        const x1 = positionToX(l.startPos);
+        const x2 = positionToX(l.endPos);
         if (x2 <= x1) return;
-        const color = speedColor(limit.speed);
-        const isSelected = state.selectedId === limit.id;
+        const y = yBottom - (l.speed / speedRange) * bandH;
+        points.push({ x: x1, y, speed: l.speed, id: l.id });
+        points.push({ x: x2, y, speed: l.speed, id: l.id });
+    });
+    if (!points.length) return;
 
-        // Colored bar
-        const alpha = isSelected ? 0.5 : 0.7;
-        ctx.globalAlpha = alpha;
-        ctx.fillStyle = color;
-        ctx.fillRect(x1, y, x2 - x1, bandH);
-        ctx.globalAlpha = 1;
+    // Draw stepped line segments
+    for (let i = 0; i < points.length - 1; i += 2) {
+        const p1 = points[i];
+        const p2 = points[i + 1];
+        if (!p2) break;
+        const color = speedColor(p1.speed);
+        const isSelected = state.selectedId === p1.id;
 
-        // Border between segments
-        ctx.strokeStyle = isSelected ? '#ffffff' : 'rgba(255,255,255,0.15)';
-        ctx.lineWidth = isSelected ? 2 : 0.5;
-        ctx.strokeRect(x1, y, x2 - x1, bandH);
+        // Line
+        ctx.strokeStyle = isSelected ? '#ffffff' : color;
+        ctx.lineWidth = isSelected ? 3 : 2;
+        ctx.beginPath();
+        ctx.moveTo(p1.x, p1.y);
+        ctx.lineTo(p2.x, p2.y);
+        ctx.stroke();
 
-        // Speed label (if wide enough)
-        if (x2 - x1 > 40) {
-            ctx.fillStyle = '#fff';
-            ctx.font = 'bold 10px Consolas, monospace';
+        // Vertical step line at start (connecting to previous segment)
+        if (i > 0) {
+            const prev = points[i - 1];
+            ctx.strokeStyle = theme.axisLabel;
+            ctx.lineWidth = 0.5;
+            ctx.setLineDash([2, 3]);
+            ctx.beginPath();
+            ctx.moveTo(p1.x, prev.y);
+            ctx.lineTo(p1.x, p1.y);
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+
+        // Speed label above the line
+        if (p2.x - p1.x > 30) {
+            ctx.fillStyle = color;
+            ctx.font = 'bold 9px Consolas, monospace';
             ctx.textAlign = 'center';
-            ctx.fillText(limit.speed + ' км/ч', (x1 + x2) / 2, y + 14);
+            ctx.fillText(p1.speed + '', (p1.x + p2.x) / 2, p1.y - 5);
             ctx.textAlign = 'left';
         }
 
-        // Selection ring
+        // Selection highlight
         if (isSelected) {
             ctx.strokeStyle = '#58a6ff';
-            ctx.lineWidth = 2;
-            ctx.setLineDash([4, 3]);
+            ctx.lineWidth = 1.5;
+            ctx.setLineDash([3, 3]);
+            const midX = (p1.x + p2.x) / 2;
             ctx.beginPath();
-            ctx.arc((x1 + x2) / 2, y + bandH / 2, bandH + 4, 0, Math.PI * 2);
+            ctx.arc(midX, p1.y, 10, 0, Math.PI * 2);
             ctx.stroke();
             ctx.setLineDash([]);
+        }
+    }
+
+    // Draw dots at transition points
+    points.forEach((p, i) => {
+        if (i % 2 === 0) {
+            ctx.fillStyle = speedColor(p.speed);
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, 2.5, 0, Math.PI * 2);
+            ctx.fill();
         }
     });
 }
 
 function drawDirectionArrow(sy) {
-    const y = sy.profileTop - 55;
+    const y = sy.profileTop - 5;
     const range = state.endKm - state.startKm;
     const x1 = MARGIN.left + 20;
     const x2 = MARGIN.left + range * 10 * state.pxPerPK - 20;
@@ -954,13 +1025,14 @@ function findRecommendationAt(mx, my) {
 
 function findSpeedLimitAt(mx, my) {
     const sy = sectionY();
-    const bandH = SPEED_HEIGHT - 8;
-    const y = sy.speedTop + 4;
+    const yTop = sy.speedTop + 2;
+    const yBottom = sy.speedBottom - 2;
+    const bandH = yBottom - yTop;
     for (const limit of state.data.speedLimits) {
         const x1 = positionToX(limit.startPos);
         const x2 = positionToX(limit.endPos);
         const bx1 = Math.min(x1, x2), bx2 = Math.max(x1, x2);
-        if (mx >= bx1 - 3 && mx <= bx2 + 3 && my >= y - 3 && my <= y + bandH + 3) return limit;
+        if (mx >= bx1 - 5 && mx <= bx2 + 5 && my >= yTop - 4 && my <= yBottom + 4) return limit;
     }
     return null;
 }
@@ -1147,11 +1219,11 @@ function selectItem(type, id, doScroll = true) {
         const item = findItemById(type, id);
         if (item) {
             let x;
-            if (type === 'elevations' || type === 'signals' || type === 'recommendations') {
+            if (type === 'elevations' || type === 'signals') {
                 x = positionToX(item.position);
             } else if (type === 'stations') {
                 x = positionToX(item.position);
-            } else if (type === 'slopes' || type === 'curves' || type === 'speedLimits') {
+            } else if (type === 'recommendations' || type === 'slopes' || type === 'curves' || type === 'speedLimits') {
                 x = (positionToX(item.startPos) + positionToX(item.endPos)) / 2;
             }
             if (x !== undefined) scrollToX(x);
