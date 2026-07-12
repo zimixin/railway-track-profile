@@ -1012,7 +1012,21 @@ canvas.addEventListener('mousemove', (e) => {
 
         const tooltip = document.getElementById('tooltip');
         if (pt) {
-            tooltip.innerHTML = `<b>Точка рельефа</b><div class="tt-row"><span>Позиция:</span><span class="tt-val">${formatPos(pt.position)}</span></div><div class="tt-row"><span>Высота:</span><span class="tt-val">${pt.y} м</span></div>`;
+            // Calculate gradient to next point
+            const elevs = state.data.elevations;
+            const idx = elevs.indexOf(pt);
+            let gradStr = '';
+            if (idx >= 0 && idx < elevs.length - 1) {
+                const next = elevs[idx + 1];
+                const dy = next.y - pt.y;
+                const dx = (next.position - pt.position) * 1000; // meters
+                if (dx !== 0) {
+                    const grad = (dy / dx * 100).toFixed(1);
+                    const dir = dy > 0 ? '↑' : '↓';
+                    gradStr = `<div class="tt-row"><span>Уклон:</span><span class="tt-val">${dir} ${Math.abs(grad)}%</span></div>`;
+                }
+            }
+            tooltip.innerHTML = `<b>Точка рельефа</b><div class="tt-row"><span>Позиция:</span><span class="tt-val">${formatPos(pt.position)}</span></div><div class="tt-row"><span>Высота:</span><span class="tt-val">${pt.y} м</span></div>${gradStr}`;
             showTooltip(e, tooltip);
         } else if (sig) {
             tooltip.innerHTML = `<b>Сигнал ${sig.label}</b><div class="tt-row"><span>Позиция:</span><span class="tt-val">${formatPos(sig.position)}</span></div>${sig.station ? `<div class="tt-row"><span>Станция:</span><span class="tt-val">${sig.station}</span></div>` : ''}`;
@@ -1710,64 +1724,16 @@ function updateZoomLabel() {
 // ============================================================
 // ROUTE PRESETS
 // ============================================================
-const ROUTES = {
-    'abdulino-kinel': {
-        name: 'Абдулино → Кинель',
-        direction: 'odd',
-        startKm: 127,
-        endKm: 154,
-        stations: [
-            { name: 'Абдулино', position: 127.5, start: 126.5, end: 128.5 },
-            { name: 'Асекеево', position: 133.0, start: 131.8, end: 134.2 },
-            { name: 'Бугуруслан', position: 140.3, start: 139.0, end: 141.8 },
-            { name: 'Похвистнево', position: 146.7, start: 145.5, end: 148.0 },
-            { name: 'Кинель', position: 153.2, start: 152.0, end: 154.0 }
-        ]
-    },
-    'kinel-abdulino': {
-        name: 'Кинель → Абдулино',
-        direction: 'even',
-        startKm: 127,
-        endKm: 154,
-        stations: [
-            { name: 'Кинель', position: 153.2, start: 152.0, end: 154.0 },
-            { name: 'Похвистнево', position: 146.7, start: 145.5, end: 148.0 },
-            { name: 'Бугуруслан', position: 140.3, start: 139.0, end: 141.8 },
-            { name: 'Асекеево', position: 133.0, start: 131.8, end: 134.2 },
-            { name: 'Абдулино', position: 127.5, start: 126.5, end: 128.5 }
-        ]
-    },
-    'ufa-chelyabinsk': {
-        name: 'Уфа → Челябинск',
-        direction: 'odd',
-        startKm: 0,
-        endKm: 40,
-        stations: [
-            { name: 'Уфа', position: 1.0, start: 0.0, end: 3.0 },
-            { name: 'Аша', position: 12.5, start: 11.0, end: 14.0 },
-            { name: 'Миньяр', position: 20.0, start: 18.5, end: 21.5 },
-            { name: 'Сим', position: 28.5, start: 27.0, end: 30.0 },
-            { name: 'Челябинск-Главный', position: 39.0, start: 37.0, end: 40.0 }
-        ]
-    },
-    'chelyabinsk-ufa': {
-        name: 'Челябинск → Уфа',
-        direction: 'even',
-        startKm: 0,
-        endKm: 40,
-        stations: [
-            { name: 'Челябинск-Главный', position: 39.0, start: 37.0, end: 40.0 },
-            { name: 'Сим', position: 28.5, start: 27.0, end: 30.0 },
-            { name: 'Миньяр', position: 20.0, start: 18.5, end: 21.5 },
-            { name: 'Аша', position: 12.5, start: 11.0, end: 14.0 },
-            { name: 'Уфа', position: 1.0, start: 0.0, end: 3.0 }
-        ]
-    }
-};
+// ============================================================
+// ROUTE PRESETS (loaded from routes.json)
+// ============================================================
+let ROUTES_DATA = null;
+let CURRENT_ROUTE_ID = null;
 
 function loadRoute(routeId) {
-    const route = ROUTES[routeId];
+    const route = ROUTES_DATA && ROUTES_DATA.routes[routeId];
     if (!route) return;
+    CURRENT_ROUTE_ID = routeId;
     saveSnapshot();
     loadDemo();
     state.direction = route.direction;
@@ -1790,13 +1756,50 @@ function loadRoute(routeId) {
     updateStats();
     draw();
     document.getElementById('statusText').innerHTML = `✅ Маршрут: ${route.name}`;
+    document.getElementById('testDataBtn').style.display = 'inline-flex';
+}
+
+function loadTestData(routeId) {
+    if (!ROUTES_DATA || !ROUTES_DATA.sampleData) return;
+    const data = ROUTES_DATA.sampleData[routeId];
+    if (!data) return;
+    saveSnapshot();
+    // Merge sample data into current state
+    const types = ['elevations', 'signals', 'slopes', 'curves', 'recommendations', 'speedLimits'];
+    types.forEach(type => {
+        if (data[type]) {
+            data[type].forEach(item => {
+                state.data[type].push({ id: newId(), ...item });
+            });
+            if (['elevations', 'slopes', 'curves', 'speedLimits'].includes(type)) {
+                state.data[type].sort((a, b) => (a.startPos || a.position) - (b.startPos || b.position));
+            }
+        }
+    });
+    // Also override stations with route data if available
+    types.forEach(refreshEditorList);
+    draw();
+    updateStats();
+    document.getElementById('statusText').innerHTML = '✅ Тестовые данные загружены';
+    document.getElementById('testDataBtn').style.display = 'none';
 }
 
 document.getElementById('routeSelect').addEventListener('change', (e) => {
     const val = e.target.value;
     if (!val) return;
     loadRoute(val);
-    e.target.value = ''; // reset to placeholder after loading
+    e.target.value = '';
+});
+
+document.getElementById('testDataBtn').addEventListener('click', () => {
+    if (CURRENT_ROUTE_ID) loadTestData(CURRENT_ROUTE_ID);
+});
+
+// Fetch routes.json on load
+fetch('routes.json').then(r => r.json()).then(data => {
+    ROUTES_DATA = data;
+}).catch(err => {
+    console.warn('Failed to load routes.json:', err);
 });
 
 // ============================================================
