@@ -17,7 +17,8 @@ const state = {
         elevations: [],
         slopes: [],
         curves: [],
-        recommendations: []
+        recommendations: [],
+        speedLimits: []
     }
 };
 
@@ -58,6 +59,7 @@ function calcRange() {
     d.slopes.forEach(sl => { if (sl.startPos < minKm) minKm = sl.startPos; if (sl.endPos > maxKm) maxKm = sl.endPos; });
     d.curves.forEach(cv => { if (cv.startPos < minKm) minKm = cv.startPos; if (cv.endPos > maxKm) maxKm = cv.endPos; });
     d.recommendations.forEach(rec => { if (rec.startPos < minKm) minKm = rec.startPos; if (rec.endPos > maxKm) maxKm = rec.endPos; });
+    d.speedLimits.forEach(sl => { if (sl.startPos < minKm) minKm = sl.startPos; if (sl.endPos > maxKm) maxKm = sl.endPos; });
 
     if (!isFinite(minKm)) {
         // Нет данных — показать заглушку
@@ -99,6 +101,7 @@ function loadDemo() {
     state.data.slopes = [];
     state.data.curves = [];
     state.data.recommendations = [];
+    state.data.speedLimits = [];
 }
 
 // ============================================================
@@ -122,7 +125,7 @@ function undo() {
     state.data = JSON.parse(JSON.stringify(history.stack[history.index]));
     state.selectedId = null; state.selectedType = null;
     closeSelectedEditor();
-    ['stations', 'signals', 'elevations', 'slopes', 'curves', 'recommendations'].forEach(refreshEditorList);
+    ['stations', 'signals', 'elevations', 'slopes', 'curves', 'recommendations', 'speedLimits'].forEach(refreshEditorList);
     draw();
 }
 
@@ -132,7 +135,7 @@ function redo() {
     state.data = JSON.parse(JSON.stringify(history.stack[history.index]));
     state.selectedId = null; state.selectedType = null;
     closeSelectedEditor();
-    ['stations', 'signals', 'elevations', 'slopes', 'curves', 'recommendations'].forEach(refreshEditorList);
+    ['stations', 'signals', 'elevations', 'slopes', 'curves', 'recommendations', 'speedLimits'].forEach(refreshEditorList);
     draw();
 }
 
@@ -191,6 +194,7 @@ const PROFILE_HEIGHT = 180;
 const KM_AXIS_HEIGHT = 50;   // horizontal axis with km/pk — placed BELOW profile
 const PLAN_HEIGHT = 70;
 const SLOPE_HEIGHT = 50;
+const SPEED_HEIGHT = 24;
 const SECTION_GAP = 30;
 
 // Y positions of each section
@@ -203,7 +207,9 @@ function sectionY() {
     const planBottom = planTop + PLAN_HEIGHT;
     const slopeTop = planBottom + SECTION_GAP;
     const slopeBottom = slopeTop + SLOPE_HEIGHT;
-    return { profileTop, profileBottom, axisTop, axisBottom, planTop, planBottom, slopeTop, slopeBottom };
+    const speedTop = slopeBottom + SECTION_GAP;
+    const speedBottom = speedTop + SPEED_HEIGHT;
+    return { profileTop, profileBottom, axisTop, axisBottom, planTop, planBottom, slopeTop, slopeBottom, speedTop, speedBottom };
 }
 
 // ============================================================
@@ -270,6 +276,7 @@ function draw() {
     drawSlopes(sy);
     drawSignals(sy);
     drawRecommendations(sy);
+    drawSpeedLimits(sy);
     drawDirectionArrow(sy);
 
     updateStats();
@@ -293,7 +300,7 @@ function drawGrid(totalWidth, totalHeight, sy) {
     // Horizontal section separators
     ctx.strokeStyle = theme.border;
         ctx.lineWidth = 1;
-        [sy.profileTop, sy.profileBottom, sy.axisBottom, sy.planBottom, sy.slopeBottom].forEach(y => {
+        [sy.profileTop, sy.profileBottom, sy.axisBottom, sy.planBottom, sy.slopeBottom, sy.speedBottom].forEach(y => {
             ctx.beginPath();
             ctx.moveTo(MARGIN.left, y);
             ctx.lineTo(MARGIN.left + (state.endKm - state.startKm) * 10 * state.pxPerPK, y);
@@ -307,6 +314,10 @@ function drawGrid(totalWidth, totalHeight, sy) {
         ctx.fillText('ПРОФИЛЬ ПУТИ', 10, sy.profileTop + 16);
         ctx.fillText('ПЛАН ПУТИ', 10, sy.planTop + 16);
         ctx.fillText('УКЛОНЫ', 10, sy.slopeTop + 16);
+        ctx.fillStyle = theme.sectionLabel;
+        ctx.font = '10px Segoe UI';
+        ctx.textAlign = 'left';
+        ctx.fillText('СКОРОСТИ', 10, sy.speedTop + 16);
 }
 
 function drawProfile(sy) {
@@ -760,6 +771,70 @@ function drawRecommendations(sy) {
     });
 }
 
+function drawSpeedLimits(sy) {
+    const limits = state.data.speedLimits;
+    if (!limits.length) return;
+
+    function speedColor(speed) {
+        if (speed >= 120) return '#2ea043';
+        if (speed >= 80) return '#d29922';
+        if (speed >= 40) return '#ffa726';
+        return '#ef5350';
+    }
+
+    const bandH = SPEED_HEIGHT - 8;
+    const y = sy.speedTop + 4;
+    const baseX1 = MARGIN.left;
+    const baseX2 = MARGIN.left + (state.endKm - state.startKm) * 10 * state.pxPerPK;
+
+    // Background track
+    ctx.fillStyle = isAmoled ? '#050505' : '#161b22';
+    ctx.fillRect(baseX1, y, baseX2 - baseX1, bandH);
+    ctx.strokeStyle = theme.border;
+    ctx.lineWidth = 0.5;
+    ctx.strokeRect(baseX1, y, baseX2 - baseX1, bandH);
+
+    limits.forEach(limit => {
+        const x1 = positionToX(limit.startPos);
+        const x2 = positionToX(limit.endPos);
+        if (x2 <= x1) return;
+        const color = speedColor(limit.speed);
+        const isSelected = state.selectedId === limit.id;
+
+        // Colored bar
+        const alpha = isSelected ? 0.5 : 0.7;
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = color;
+        ctx.fillRect(x1, y, x2 - x1, bandH);
+        ctx.globalAlpha = 1;
+
+        // Border between segments
+        ctx.strokeStyle = isSelected ? '#ffffff' : 'rgba(255,255,255,0.15)';
+        ctx.lineWidth = isSelected ? 2 : 0.5;
+        ctx.strokeRect(x1, y, x2 - x1, bandH);
+
+        // Speed label (if wide enough)
+        if (x2 - x1 > 40) {
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 10px Consolas, monospace';
+            ctx.textAlign = 'center';
+            ctx.fillText(limit.speed + ' км/ч', (x1 + x2) / 2, y + 14);
+            ctx.textAlign = 'left';
+        }
+
+        // Selection ring
+        if (isSelected) {
+            ctx.strokeStyle = '#58a6ff';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([4, 3]);
+            ctx.beginPath();
+            ctx.arc((x1 + x2) / 2, y + bandH / 2, bandH + 4, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+    });
+}
+
 function drawDirectionArrow(sy) {
     const y = sy.profileTop - 55;
     const range = state.endKm - state.startKm;
@@ -877,6 +952,19 @@ function findRecommendationAt(mx, my) {
     return null;
 }
 
+function findSpeedLimitAt(mx, my) {
+    const sy = sectionY();
+    const bandH = SPEED_HEIGHT - 8;
+    const y = sy.speedTop + 4;
+    for (const limit of state.data.speedLimits) {
+        const x1 = positionToX(limit.startPos);
+        const x2 = positionToX(limit.endPos);
+        const bx1 = Math.min(x1, x2), bx2 = Math.max(x1, x2);
+        if (mx >= bx1 - 3 && mx <= bx2 + 3 && my >= y - 3 && my <= y + bandH + 3) return limit;
+    }
+    return null;
+}
+
 canvas.addEventListener('mousedown', (e) => {
     if (!state.editMode) return;
     const { x, y } = getMousePos(e);
@@ -919,7 +1007,8 @@ canvas.addEventListener('mousemove', (e) => {
         const sig = !pt ? findSignalAt(x, y) : null;
         const st = !pt && !sig ? findStationAt(x, y) : null;
         const rec = !pt && !sig && !st ? findRecommendationAt(x, y) : null;
-        canvas.style.cursor = (pt || sig || st || rec) ? 'pointer' : 'crosshair';
+        const sp = !pt && !sig && !st && !rec ? findSpeedLimitAt(x, y) : null;
+        canvas.style.cursor = (pt || sig || st || rec || sp) ? 'pointer' : 'crosshair';
 
         const tooltip = document.getElementById('tooltip');
         if (pt) {
@@ -933,6 +1022,9 @@ canvas.addEventListener('mousemove', (e) => {
             showTooltip(e, tooltip);
         } else if (rec) {
             tooltip.innerHTML = `<b>Рекомендация</b><div class="tt-row"><span>От:</span><span class="tt-val">${formatPos(rec.startPos)}</span></div><div class="tt-row"><span>До:</span><span class="tt-val">${formatPos(rec.endPos)}</span></div><div style="margin-top:4px;color:#c9d1d9;">${rec.text}</div>`;
+            showTooltip(e, tooltip);
+        } else if (sp) {
+            tooltip.innerHTML = `<b>Ограничение скорости</b><div class="tt-row"><span>От:</span><span class="tt-val">${formatPos(sp.startPos)}</span></div><div class="tt-row"><span>До:</span><span class="tt-val">${formatPos(sp.endPos)}</span></div><div class="tt-row"><span>Скорость:</span><span class="tt-val">${sp.speed} км/ч</span></div>${sp.remark ? `<div style="margin-top:4px;color:#c9d1d9;">${sp.remark}</div>` : ''}`;
             showTooltip(e, tooltip);
         } else {
             tooltip.style.display = 'none';
@@ -965,6 +1057,8 @@ canvas.addEventListener('click', (e) => {
         if (st) { selectItem('stations', st.id, true); return; }
         const rec = findRecommendationAt(x, y);
         if (rec) { selectItem('recommendations', rec.id, true); return; }
+        const sp = findSpeedLimitAt(x, y);
+        if (sp) { selectItem('speedLimits', sp.id, true); return; }
 
         // Точечное нанесение рельефа — клик на профиле
         const activeTab = document.querySelector('.editor-tab.active');
@@ -1043,7 +1137,7 @@ function selectItem(type, id, doScroll = true) {
                 x = positionToX(item.position);
             } else if (type === 'stations') {
                 x = positionToX(item.position);
-            } else if (type === 'slopes' || type === 'curves') {
+            } else if (type === 'slopes' || type === 'curves' || type === 'speedLimits') {
                 x = (positionToX(item.startPos) + positionToX(item.endPos)) / 2;
             }
             if (x !== undefined) scrollToX(x);
@@ -1057,7 +1151,7 @@ function findItemById(type, id) {
 }
 
 function showSelectedEditor(type, id) {
-    ['stations', 'signals', 'elevations', 'slopes', 'curves', 'recommendations'].forEach(t => {
+    ['stations', 'signals', 'elevations', 'slopes', 'curves', 'recommendations', 'speedLimits'].forEach(t => {
         document.getElementById('sel-' + t).classList.remove('active');
     });
     if (!id) return;
@@ -1124,13 +1218,22 @@ function updateSelectedEditorFields() {
             document.getElementById('sel-rc-text').value = item.text || '';
             document.getElementById('sel-rc-speed').value = item.speed || '';
             document.getElementById('sel-rc-speed-color').value = item.speedColor || 'red';
+        } else if (t === 'speedLimits') {
+            const s = fromPos(item.startPos);
+            const e = fromPos(item.endPos);
+            document.getElementById('sel-sp-start-km').value = s.km;
+            document.getElementById('sel-sp-start-m').value = s.m;
+            document.getElementById('sel-sp-end-km').value = e.km;
+            document.getElementById('sel-sp-end-m').value = e.m;
+            document.getElementById('sel-sp-speed').value = item.speed || 60;
+            document.getElementById('sel-sp-remark').value = item.remark || '';
         }
 }
 
 function closeSelectedEditor() {
     state.selectedId = null;
     state.selectedType = null;
-    ['stations', 'signals', 'elevations', 'slopes', 'curves', 'recommendations'].forEach(t => {
+    ['stations', 'signals', 'elevations', 'slopes', 'curves', 'recommendations', 'speedLimits'].forEach(t => {
         document.getElementById('sel-' + t).classList.remove('active');
     });
     refreshCurrentList();
@@ -1274,6 +1377,25 @@ document.querySelector('[data-save="recommendations"]').addEventListener('click'
     delete item._skm; delete item._sm; delete item._ekm; delete item._em;
     state.data.recommendations.sort((a, b) => a.startPos - b.startPos);
     refreshEditorList('recommendations');
+    draw();
+});
+
+setupSaveHandler('speedLimits', [
+    ['sel-sp-start-km', '_skm', parseInt],
+    ['sel-sp-start-m', '_sm', parseInt],
+    ['sel-sp-end-km', '_ekm', parseInt],
+    ['sel-sp-end-m', '_em', parseInt],
+    ['sel-sp-speed', 'speed', parseInt],
+    ['sel-sp-remark', 'remark']
+]);
+document.querySelector('[data-save="speedLimits"]').addEventListener('click', () => {
+    const item = findItemById('speedLimits', state.selectedId);
+    if (!item) return;
+    item.startPos = toPos(item._skm, item._sm);
+    item.endPos = toPos(item._ekm, item._em);
+    delete item._skm; delete item._sm; delete item._ekm; delete item._em;
+    state.data.speedLimits.sort((a, b) => a.startPos - b.startPos);
+    refreshEditorList('speedLimits');
     draw();
 });
 
@@ -1443,6 +1565,21 @@ document.getElementById('addRecBtn').addEventListener('click', () => {
     } catch (e) { showValidationError(e.message); }
 });
 
+document.getElementById('addSpeedBtn').addEventListener('click', () => {
+    const sp = {
+        id: newId(),
+        startPos: readKmM('sp-start-km', 'sp-start-m'),
+        endPos: readKmM('sp-end-km', 'sp-end-m'),
+        speed: parseInt(document.getElementById('sp-speed').value) || 60,
+        remark: document.getElementById('sp-remark').value || ''
+    };
+    state.data.speedLimits.push(sp);
+    saveSnapshot();
+    state.data.speedLimits.sort((a, b) => a.startPos - b.startPos);
+    refreshEditorList('speedLimits');
+    selectItem('speedLimits', sp.id, true);
+});
+
 // ============================================================
 // LISTS
 // ============================================================
@@ -1493,6 +1630,7 @@ function renderColor(type, item, typeColors, categoryColors) {
     if (type === 'slopes') return item.direction === 'up' ? '#ffa726' : '#42a5f5';
     if (type === 'curves') return '#58a6ff';
     if (type === 'recommendations') return categoryColors[item.category] || '#d29922';
+    if (type === 'speedLimits') return '#d29922';
     return '#8b949e';
 }
 
@@ -1508,6 +1646,10 @@ function renderLabel(type, item, typeColors, categoryColors) {
     if (type === 'recommendations') {
         const preview = item.text.substring(0, 30) + (item.text.length > 30 ? '...' : '');
         return `${formatPos(item.startPos)}→${formatPos(item.endPos)} · ${preview}`;
+    }
+    if (type === 'speedLimits') {
+        const remark = item.remark ? ` · ${item.remark}` : '';
+        return `${formatPos(item.startPos)}→${formatPos(item.endPos)} · <b>${item.speed} км/ч</b>${remark}`;
     }
     return '';
 }
@@ -1637,8 +1779,12 @@ function loadFromLocalStorage() {
         delete parsed._savedAt;
         // Validate basic structure
         const required = ['stations','signals','elevations','slopes','curves','recommendations'];
+        const optional = ['speedLimits'];
         for (const key of required) {
             if (!Array.isArray(parsed[key])) return false;
+        }
+        for (const key of optional) {
+            if (!Array.isArray(parsed[key])) parsed[key] = [];
         }
         state.data = parsed;
         return true;
@@ -1683,7 +1829,7 @@ document.getElementById('importInput').addEventListener('change', (e) => {
     reader.onload = (ev) => {
         try {
             const parsed = JSON.parse(ev.target.result);
-            const required = ['stations','signals','elevations','slopes','curves','recommendations'];
+            const required = ['stations','signals','elevations','slopes','curves','recommendations','speedLimits'];
             for (const key of required) {
                 if (!Array.isArray(parsed[key])) {
                     throw new Error(`Файл повреждён: нет массива "${key}"`);
@@ -1695,7 +1841,8 @@ document.getElementById('importInput').addEventListener('change', (e) => {
                 elevations: parsed.elevations,
                 slopes: parsed.slopes,
                 curves: parsed.curves,
-                recommendations: parsed.recommendations
+                recommendations: parsed.recommendations,
+                speedLimits: parsed.speedLimits || []
             };
             saveSnapshot();
             saveToLocalStorage();
@@ -1727,6 +1874,7 @@ function updateStats() {
     document.getElementById('statSt').textContent = state.data.stations.length;
     const sigCount = state.data.signals.filter(s => s.dir === state.direction || s.dir === 'both').length;
     document.getElementById('statSg').textContent = sigCount;
+    document.getElementById('statSp').textContent = state.data.speedLimits.length;
     updateRouteLabel();
     updateRangeLabel();
 }
@@ -1741,5 +1889,5 @@ saveSnapshot();
 document.getElementById('statusText').innerHTML = state.data.stations.length
     ? '✅ Восстановлено из сохранения'
     : '⚡ Новый профиль';
-['stations', 'signals', 'elevations', 'slopes', 'curves', 'recommendations'].forEach(refreshEditorList);
+['stations', 'signals', 'elevations', 'slopes', 'curves', 'recommendations', 'speedLimits'].forEach(refreshEditorList);
 draw();

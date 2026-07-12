@@ -59,6 +59,7 @@
             <div class="legend-item"><span style="color:#ab47bc;font-weight:bold;font-size:12px;">◆</span>&nbsp;Маневровый</div>
             <div class="legend-item"><span style="color:#ef5350;font-weight:bold;font-size:12px;">■</span>&nbsp;Выходной</div>
             <div class="legend-item"><span style="color:#d29922;font-weight:bold;font-size:12px;">⚑</span>&nbsp;Рекомендация</div>
+            <div class="legend-item"><span style="background:#d29922;display:inline-block;width:18px;height:4px;border-radius:2px;vertical-align:middle;"></span>&nbsp;Скорости (км/ч)</div>
         </div>
     </div>
 
@@ -80,6 +81,7 @@
             <button class="editor-tab" data-tab="slopes">Уклоны</button>
             <button class="editor-tab" data-tab="curves">Кривые</button>
             <button class="editor-tab" data-tab="recommendations">Рекомендации</button>
+            <button class="editor-tab" data-tab="speedLimits">Скорости</button>
         </div>
         <div class="editor-body">
             <!-- STATIONS -->
@@ -608,6 +610,85 @@
                     </div>
                 </div>
             </div>
+
+            <!-- SPEED LIMITS -->
+            <div class="editor-section" id="sec-speedLimits">
+                <div class="section-title">Добавить ограничение скорости</div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Начало (км)</label>
+                        <input type="number" id="sp-start-km" value="0" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Начало (м)</label>
+                        <input type="number" id="sp-start-m" value="0" min="0" max="999">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Конец (км)</label>
+                        <input type="number" id="sp-end-km" value="0" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Конец (м)</label>
+                        <input type="number" id="sp-end-m" value="200" min="0" max="999">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Скорость (км/ч)</label>
+                        <input type="number" id="sp-speed" value="60" min="5" max="300">
+                    </div>
+                    <div class="form-group">
+                        <label>Примечание</label>
+                        <input type="text" id="sp-remark" placeholder="Напр. кривая R=600">
+                    </div>
+                </div>
+                <div class="hint-box">💡 Зелёный ≥120, жёлтый ≥80, оранжевый ≥40, красный &lt;40 км/ч</div>
+                <button class="btn btn-primary" style="width:100%;justify-content:center;" id="addSpeedBtn">+ Добавить ограничение</button>
+                <div class="section-title" style="margin-top:4px;">Список ограничений</div>
+                <div class="item-list" id="speedLimitsList"></div>
+                <div class="selected-editor" id="sel-speedLimits">
+                    <div class="selected-editor-header">
+                        <div class="selected-editor-title">✎ Редактирование ограничения</div>
+                        <button class="selected-editor-close" data-close="speedLimits">✕</button>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Начало (км)</label>
+                            <input type="number" id="sel-sp-start-km">
+                        </div>
+                        <div class="form-group">
+                            <label>Начало (м)</label>
+                            <input type="number" id="sel-sp-start-m" min="0" max="999">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Конец (км)</label>
+                            <input type="number" id="sel-sp-end-km">
+                        </div>
+                        <div class="form-group">
+                            <label>Конец (м)</label>
+                            <input type="number" id="sel-sp-end-m" min="0" max="999">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Скорость (км/ч)</label>
+                            <input type="number" id="sel-sp-speed" min="5" max="300">
+                        </div>
+                        <div class="form-group">
+                            <label>Примечание</label>
+                            <input type="text" id="sel-sp-remark">
+                        </div>
+                    </div>
+                    <div class="selected-editor-actions">
+                        <button class="btn btn-ghost" data-cancel="speedLimits">Отмена</button>
+                        <button class="btn btn-primary" data-save="speedLimits">Сохранить</button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -623,6 +704,7 @@
     <div class="status-item" style="margin-left:auto;">Точек: <b id="statPts">0</b></div>
     <div class="status-item">Станций: <b id="statSt">0</b></div>
     <div class="status-item">Сигналов: <b id="statSg">0</b></div>
+    <div class="status-item">Скоростей: <b id="statSp">0</b></div>
 </div>
 
 </body>
