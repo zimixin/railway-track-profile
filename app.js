@@ -1756,7 +1756,11 @@ function loadRoute(routeId) {
     updateStats();
     draw();
     document.getElementById('statusText').innerHTML = `✅ Маршрут: ${route.name}`;
-    document.getElementById('testDataBtn').style.display = 'inline-flex';
+
+    // Auto-load sample data if available
+    if (ROUTES_DATA && ROUTES_DATA.sampleData && ROUTES_DATA.sampleData[routeId]) {
+        loadTestData(routeId);
+    }
 }
 
 function loadTestData(routeId) {
@@ -1780,19 +1784,25 @@ function loadTestData(routeId) {
     types.forEach(refreshEditorList);
     draw();
     updateStats();
-    document.getElementById('statusText').innerHTML = '✅ Тестовые данные загружены';
-    document.getElementById('testDataBtn').style.display = 'none';
+    document.getElementById('statusText').innerHTML = '✅ Данные маршрута загружены';
 }
 
 document.getElementById('routeSelect').addEventListener('change', (e) => {
     const val = e.target.value;
     if (!val) return;
-    loadRoute(val);
     e.target.value = '';
-});
-
-document.getElementById('testDataBtn').addEventListener('click', () => {
-    if (CURRENT_ROUTE_ID) loadTestData(CURRENT_ROUTE_ID);
+    if (ROUTES_DATA) {
+        loadRoute(val);
+    } else {
+        // Defer — routes.json hasn't loaded yet
+        document.getElementById('statusText').innerHTML = '⏳ Загрузка маршрутов...';
+        const checkLoaded = setInterval(() => {
+            if (ROUTES_DATA) {
+                clearInterval(checkLoaded);
+                loadRoute(val);
+            }
+        }, 200);
+    }
 });
 
 // Fetch routes.json on load
@@ -1800,6 +1810,7 @@ fetch('routes.json').then(r => r.json()).then(data => {
     ROUTES_DATA = data;
 }).catch(err => {
     console.warn('Failed to load routes.json:', err);
+    document.getElementById('statusText').innerHTML = '⚠ Ошибка загрузки routes.json';
 });
 
 // ============================================================
