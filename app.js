@@ -11,6 +11,7 @@ const state = {
     selectedType: null,
     dragging: null,
     idCounter: 1,
+    importedFromFile: false, // true when data loaded from import
     data: {
         stations: [],
         signals: [],
@@ -279,9 +280,9 @@ function draw() {
     drawSlopes(sy);
     drawSignals(sy);
     drawCrossings(sy);
-    drawRecommendations(sy);
     drawSpeedGraph(sy);
     drawDirectionArrow(sy);
+    drawRecommendations(sy);
 
     updateStats();
 }
@@ -763,115 +764,141 @@ function drawCrossings(sy) {
 
 function drawRecommendations(sy) {
     const recs = state.data.recommendations;
+    if (!recs.length) return;
     const categoryColors = {
         note: '#d29922',
         warning: '#f85149',
-        restriction: '#a371f7',
         info: '#58a6ff'
     };
-    const categoryIcons = { note: '📝', warning: '⚠', restriction: '🚧', info: 'ℹ' };
-    const speedColors = { red: '#ef5350', blue: '#42a5f5' };
+    const categoryIcons = { note: '📝', warning: '⚠', info: 'ℹ' };
 
     recs.forEach(rec => {
         const x1 = positionToX(rec.startPos);
         const x2 = positionToX(rec.endPos);
-        const y = sy.profileTop + 12;
+        const bx1 = Math.min(x1, x2), bx2 = Math.max(x1, x2);
+        const midX = (bx1 + bx2) / 2;
         const color = categoryColors[rec.category] || '#d29922';
         const isSelected = state.selectedId === rec.id;
-        const bandHeight = 4;
-
-        // Background band
-        const alpha = isSelected ? 0.25 : 0.12;
-        ctx.fillStyle = color.replace(')', `,${alpha})`).replace('rgb', 'rgba');
-        if (!color.includes('rgba')) {
-            ctx.globalAlpha = alpha;
-            ctx.fillStyle = color;
-        }
-        const bx1 = Math.min(x1, x2), bx2 = Math.max(x1, x2);
-        ctx.fillRect(bx1, y, bx2 - bx1 || 2, bandHeight);
-        ctx.globalAlpha = 1;
-
-        // Segment outline
-        ctx.strokeStyle = isSelected ? '#ffffff' : color;
-        ctx.lineWidth = isSelected ? 2 : 1;
-        ctx.setLineDash(rec.category === 'warning' ? [4, 3] : []);
-        ctx.strokeRect(bx1, y, bx2 - bx1 || 2, bandHeight);
-        ctx.setLineDash([]);
-
-        // End marks
-        [bx1, bx2].forEach(mx => {
-            ctx.fillStyle = color;
-            ctx.fillRect(mx - 1, y - 2, 2, bandHeight + 4);
-        });
-
-        // Icon + text label — always visible
-        const midX = (bx1 + bx2) / 2;
-        const labelY = y - 12;
-        const text = rec.text.length > 35 ? rec.text.substring(0, 32) + '…' : rec.text;
+        const icon = categoryIcons[rec.category] + ' ';
         const rangeStr = formatPos(rec.startPos) + ' → ' + formatPos(rec.endPos);
 
-        // Text background
-        ctx.font = 'bold 10px Segoe UI';
-        const tw = ctx.measureText(text).width;
-        const rw = ctx.measureText(rangeStr).width;
-        const labelW = Math.max(tw, rw) + 24;
-        const lx = Math.max(MARGIN.left, Math.min(midX - labelW / 2, bx1 + (bx2 - bx1) / 2 - labelW / 2));
-        const ly = labelY - 20;
-
-        ctx.fillStyle = theme.recBg;
-        roundRect(ctx, lx, ly, labelW, 38, 4);
-        ctx.fill();
+        // --- Vertical 'I' markers at start and end ---
+        const barTop = sy.profileTop + 6;
+        const barBot = sy.profileTop + PROFILE_HEIGHT - 6;
         ctx.strokeStyle = color;
-        ctx.lineWidth = isSelected ? 1.5 : 0.5;
-        roundRect(ctx, lx, ly, labelW, 38, 4);
+        ctx.lineWidth = isSelected ? 3 : 2;
+        ctx.globalAlpha = isSelected ? 0.9 : 0.5;
+        // Start marker
+        ctx.beginPath();
+        ctx.moveTo(bx1, barTop);
+        ctx.lineTo(bx1, barBot);
         ctx.stroke();
+        // End marker
+        if (bx2 - bx1 > 10) {
+            ctx.beginPath();
+            ctx.moveTo(bx2, barTop);
+            ctx.lineTo(bx2, barBot);
+            ctx.stroke();
+        }
+        // Horizontal connector at top
+        ctx.beginPath();
+        ctx.moveTo(bx1, barTop);
+        ctx.lineTo(bx2, barTop);
+        ctx.stroke();
+        ctx.globalAlpha = 1;
 
-        // Range line
-        ctx.fillStyle = theme.axisLabel;
-        ctx.font = '8px Consolas, monospace';
-        ctx.textAlign = 'center';
-        ctx.fillText(rangeStr, lx + labelW / 2, ly + 11);
-
-        // Icon
-        ctx.font = '10px Segoe UI';
+        // Dots at top of markers
+        const dotR = isSelected ? 5 : 3.5;
+        ctx.beginPath();
+        ctx.arc(bx1, barTop, dotR, 0, Math.PI * 2);
         ctx.fillStyle = color;
-        ctx.fillText(categoryIcons[rec.category] + ' ' + text, lx + 10, ly + 26);
-
-        // Speed badge for restrictions
-        if (rec.category === 'restriction' && rec.speed) {
-            const sc = speedColors[rec.speedColor] || '#ef5350';
-            const badgeText = rec.speed + ' км/ч';
-            ctx.font = 'bold 9px Consolas, monospace';
-            const bw = ctx.measureText(badgeText).width + 10;
-            const bx = lx + labelW + 4;
-
-            ctx.fillStyle = sc;
-            roundRect(ctx, bx, ly + 2, bw, 16, 8);
+        ctx.fill();
+        ctx.strokeStyle = isSelected ? '#fff' : '#0d1117';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        if (bx2 - bx1 > 10) {
+            ctx.beginPath();
+            ctx.arc(bx2, barTop, dotR, 0, Math.PI * 2);
+            ctx.fillStyle = color;
             ctx.fill();
-            ctx.fillStyle = '#fff';
-            ctx.font = 'bold 9px Consolas, monospace';
-            ctx.textAlign = 'center';
-            ctx.fillText(badgeText, bx + bw / 2, ly + 14);
-
-            // Color stripe on the rail band
-            ctx.fillStyle = sc;
-            ctx.globalAlpha = 0.5;
-            ctx.fillRect(bx1, y + bandHeight + 1, bx2 - bx1 || 2, 3);
-            ctx.globalAlpha = 1;
+            ctx.strokeStyle = isSelected ? '#fff' : '#0d1117';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
         }
 
-        // Selection highlight
+        // --- Adaptive 3-line label above the profile ---
+        // Wrap text to fit
+        const maxWidth = Math.max(180, bx2 - bx1 + 40);
+        const fullText = icon + rec.text;
+        ctx.font = (isSelected ? 'bold 11px ' : '10px ') + 'Segoe UI';
+        const lines = wordWrap(ctx, fullText, maxWidth - 20);
+        const cappedLines = lines.slice(0, 3);
+        const lineH = 14;
+        const textH = cappedLines.length * lineH + 4;
+        const labelW = maxWidth;
+        const labelX = Math.max(MARGIN.left + 2, Math.min(midX - labelW / 2, 
+            MARGIN.left + (state.endKm - state.startKm) * 10 * state.pxPerPK - labelW - 2));
+        const labelY = sy.profileTop + 2;
+
+        // Background
+        ctx.fillStyle = isSelected ? 'rgba(22,27,34,0.97)' : 'rgba(13,17,23,0.92)';
+        roundRect(ctx, labelX, labelY, labelW, textH + 16, 5);
+        ctx.fill();
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 0.5;
+        roundRect(ctx, labelX, labelY, labelW, textH + 16, 5);
+        ctx.stroke();
+
+        // Range string (always visible)
+        ctx.fillStyle = '#8b949e';
+        ctx.font = '8px Consolas, monospace';
+        ctx.textAlign = 'left';
+        ctx.fillText(rangeStr, labelX + 8, labelY + 10);
+
+        // Text lines
+        ctx.fillStyle = color;
+        ctx.font = (isSelected ? 'bold 10px ' : '9px ') + 'Segoe UI';
+        cappedLines.forEach((line, i) => {
+            ctx.fillText(line, labelX + 8, labelY + 25 + i * lineH);
+        });
+
+        // If text was truncated
+        if (cappedLines.length < lines.length) {
+            ctx.fillStyle = '#6e7681';
+            ctx.font = '8px Segoe UI';
+            ctx.fillText('...', labelX + labelW - 20, labelY + textH + 14);
+        }
+
+        ctx.textAlign = 'left';
+
+        // Selection ring
         if (isSelected) {
             ctx.strokeStyle = '#58a6ff';
             ctx.lineWidth = 1.5;
             ctx.setLineDash([3, 3]);
             ctx.beginPath();
-            ctx.arc(midX, y, 18, 0, Math.PI * 2);
+            ctx.arc(midX, barTop, 18, 0, Math.PI * 2);
             ctx.stroke();
             ctx.setLineDash([]);
         }
-        ctx.textAlign = 'left';
     });
+}
+
+function wordWrap(ctx, text, maxWidth) {
+    const words = text.split(/(?<=\s)/);
+    const lines = [];
+    let current = '';
+    for (const word of words) {
+        const test = current ? current + word : word;
+        if (ctx.measureText(test).width > maxWidth && current) {
+            lines.push(current.trim());
+            current = word;
+        } else {
+            current = test;
+        }
+    }
+    if (current) lines.push(current.trim());
+    return lines.length ? lines : [text];
 }
 
 function drawSpeedGraph(sy) {
@@ -939,86 +966,122 @@ function drawSpeedGraph(sy) {
     ctx.font = '7px Segoe UI';
     ctx.fillText('км/ч', MARGIN.left - 6, yTop + 10);
 
-    // Build stepped line points
-    // Sort limits by startPos
+    // Build continuous stepped line with overlap resolution (min speed wins)
     const sorted = [...limits].sort((a, b) => a.startPos - b.startPos);
-    const points = [];
-    sorted.forEach(l => {
-        let x1 = positionToX(l.startPos);
-        let x2 = positionToX(l.endPos);
-        if (x2 < x1) { const t = x1; x1 = x2; x2 = t; }
-        const y = yBottom - (l.speed / speedRange) * bandH;
-        points.push({ x: x1, y, speed: l.speed, id: l.id });
-        points.push({ x: x2, y, speed: l.speed, id: l.id });
+    
+    // Collect all unique breakpoints
+    const breaks = new Set();
+    limits.forEach(l => { breaks.add(l.startPos); breaks.add(l.endPos); });
+    const sortedBreaks = Array.from(breaks).sort((a, b) => a - b);
+    
+    // For each interval, compute effective speed (minimum of all active limits)
+    const segments = [];
+    for (let i = 0; i < sortedBreaks.length - 1; i++) {
+        const mid = (sortedBreaks[i] + sortedBreaks[i + 1]) / 2;
+        let minSpeed = Infinity;
+        limits.forEach(l => {
+            const s = Math.min(l.startPos, l.endPos);
+            const e = Math.max(l.startPos, l.endPos);
+            if (mid >= s && mid < e) {
+                if (l.speed < minSpeed) minSpeed = l.speed;
+            }
+        });
+        if (minSpeed !== Infinity) {
+            segments.push({ from: sortedBreaks[i], to: sortedBreaks[i + 1], speed: minSpeed });
+        }
+    }
+
+    if (!segments.length) return;
+
+    // Build polyline points — always push both points per segment
+    const polyPoints = [];
+    segments.forEach((seg, idx) => {
+        const x1 = positionToX(seg.from);
+        const x2 = positionToX(seg.to);
+        const y = yBottom - (seg.speed / speedRange) * bandH;
+        polyPoints.push({ x: x1, y, speed: seg.speed });
+        polyPoints.push({ x: x2, y, speed: seg.speed });
     });
-    if (!points.length) return;
 
-    // Draw stepped line segments
-    for (let i = 0; i < points.length - 1; i += 2) {
-        const p1 = points[i];
-        const p2 = points[i + 1];
+    if (!polyPoints.length) return;
+
+    // Find which segments belong to selected limit (for highlight)
+    const selectedSegments = new Set();
+    if (state.selectedId && state.selectedType === 'speedLimits') {
+        const selLimit = state.data.speedLimits.find(l => l.id === state.selectedId);
+        if (selLimit) {
+            const s = Math.min(selLimit.startPos, selLimit.endPos);
+            const e = Math.max(selLimit.startPos, selLimit.endPos);
+            segments.forEach((seg, idx) => {
+                const midSeg = (seg.from + seg.to) / 2;
+                if (midSeg >= s && midSeg < e) selectedSegments.add(idx);
+            });
+        }
+    }
+
+    // Draw horizontal segments (even->odd pairs)
+    for (let i = 0; i < polyPoints.length; i += 2) {
+        const p1 = polyPoints[i];
+        const p2 = polyPoints[i + 1];
         if (!p2) break;
+        const segIdx = i / 2;
         const color = speedColor(p1.speed);
-        const isSelected = state.selectedId === p1.id;
-
-        // Line
-        ctx.strokeStyle = isSelected ? '#ffffff' : color;
-        ctx.lineWidth = isSelected ? 3 : 2;
+        const isSelected = selectedSegments.has(segIdx);
+        
+        // White glow for selected
+        if (isSelected) {
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(p1.x, p1.y);
+            ctx.lineTo(p2.x, p2.y);
+            ctx.stroke();
+        }
+        
+        // Colored segment
+        ctx.strokeStyle = color;
+        ctx.lineWidth = isSelected ? 3.5 : 2.5;
         ctx.beginPath();
         ctx.moveTo(p1.x, p1.y);
         ctx.lineTo(p2.x, p2.y);
         ctx.stroke();
-
-        // Vertical step line at start (connecting to previous segment)
-        if (i > 0) {
-            const prev = points[i - 1];
-            // Horizontal connector from previous segment end to this segment start
-            ctx.strokeStyle = theme.axisLabel;
-            ctx.lineWidth = 0.5;
-            ctx.setLineDash([2, 3]);
-            ctx.beginPath();
-            ctx.moveTo(prev.x, prev.y);
-            ctx.lineTo(p1.x, prev.y);
-            ctx.stroke();
-            // Vertical step at this segment's start
-            ctx.beginPath();
-            ctx.moveTo(p1.x, prev.y);
-            ctx.lineTo(p1.x, p1.y);
-            ctx.stroke();
-            ctx.setLineDash([]);
-        }
-
-        // Speed label above the line
-        if (p2.x - p1.x > 30) {
-            ctx.fillStyle = color;
+        
+        // Speed label
+        ctx.textAlign = 'center';
+        ctx.fillStyle = color;
+        if (p2.x - p1.x > 20) {
             ctx.font = 'bold 9px Consolas, monospace';
-            ctx.textAlign = 'center';
-            ctx.fillText(p1.speed + '', (p1.x + p2.x) / 2, p1.y - 5);
-            ctx.textAlign = 'left';
+            ctx.fillText(p1.speed + '', (p1.x + p2.x) / 2, p1.y - 6);
+        } else {
+            ctx.font = 'bold 8px Consolas, monospace';
+            ctx.fillText(p1.speed + '', p1.x, p1.y - 4);
         }
-
-        // Selection highlight
-        if (isSelected) {
-            ctx.strokeStyle = '#58a6ff';
-            ctx.lineWidth = 1.5;
-            ctx.setLineDash([3, 3]);
-            const midX = (p1.x + p2.x) / 2;
-            ctx.beginPath();
-            ctx.arc(midX, p1.y, 10, 0, Math.PI * 2);
-            ctx.stroke();
-            ctx.setLineDash([]);
-        }
+        ctx.textAlign = 'left';
+        
+        // Start dot
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.arc(p1.x, p1.y, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+        // End dot
+        ctx.beginPath();
+        ctx.arc(p2.x, p2.y, 2.5, 0, Math.PI * 2);
+        ctx.fill();
     }
 
-    // Draw dots at transition points
-    points.forEach((p, i) => {
-        if (i % 2 === 0) {
-            ctx.fillStyle = speedColor(p.speed);
+    // Draw vertical steps between segments where speed changes
+    for (let i = 2; i < polyPoints.length; i += 2) {
+        const prevEnd = polyPoints[i - 1];   // previous segment end
+        const currStart = polyPoints[i];      // current segment start
+        if (prevEnd.x === currStart.x && prevEnd.y !== currStart.y) {
+            ctx.strokeStyle = speedColor(currStart.speed);
+            ctx.lineWidth = 2.5;
             ctx.beginPath();
-            ctx.arc(p.x, p.y, 2.5, 0, Math.PI * 2);
-            ctx.fill();
+            ctx.moveTo(currStart.x, prevEnd.y);
+            ctx.lineTo(currStart.x, currStart.y);
+            ctx.stroke();
         }
-    });
+    }
 }
 
 function drawDirectionArrow(sy) {
@@ -1080,11 +1143,52 @@ function roundRect(ctx, x, y, w, h, r) {
 // ============================================================
 function getMousePos(e) {
     const rect = canvas.getBoundingClientRect();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
     return {
-        x: (e.clientX - rect.left) * (canvas.width / rect.width),
-        y: (e.clientY - rect.top) * (canvas.height / rect.height)
+        x: (clientX - rect.left) * (canvas.width / rect.width),
+        y: (clientY - rect.top) * (canvas.height / rect.height)
     };
 }
+
+// Touch event support — forward to mouse handlers
+let touchStartX = 0, touchStartY = 0, touchMoved = false;
+canvas.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    const touch = e.changedTouches[0];
+    touchStartX = touch.clientX;
+    touchStartY = touch.clientY;
+    touchMoved = false;
+    const mouseEvent = new MouseEvent('mousedown', {
+        clientX: touch.clientX, clientY: touch.clientY
+    });
+    canvas.dispatchEvent(mouseEvent);
+}, { passive: false });
+canvas.addEventListener('touchmove', (e) => {
+    e.preventDefault();
+    touchMoved = true;
+    const touch = e.changedTouches[0];
+    const mouseEvent = new MouseEvent('mousemove', {
+        clientX: touch.clientX, clientY: touch.clientY
+    });
+    canvas.dispatchEvent(mouseEvent);
+}, { passive: false });
+canvas.addEventListener('touchend', (e) => {
+    e.preventDefault();
+    const mouseEvent = new MouseEvent('mouseup', {});
+    canvas.dispatchEvent(mouseEvent);
+    // Detect tap (no movement) — dispatch click for on-canvas selection
+    if (!touchMoved) {
+        const touch = e.changedTouches[0];
+        canvas.dispatchEvent(new MouseEvent('click', {
+            clientX: touch.clientX, clientY: touch.clientY
+        }));
+    }
+}, { passive: false });
+canvas.addEventListener('touchcancel', (e) => {
+    const mouseEvent = new MouseEvent('mouseup', {});
+    canvas.dispatchEvent(mouseEvent);
+}, { passive: false });
 
 function findElevationAt(mx, my) {
     if (!state.editMode) return null;
@@ -1131,9 +1235,12 @@ function findRecommendationAt(mx, my) {
     for (const rec of state.data.recommendations) {
         const x1 = positionToX(rec.startPos);
         const x2 = positionToX(rec.endPos);
-        const y = sy.profileTop + 12;
         const bx1 = Math.min(x1, x2), bx2 = Math.max(x1, x2);
-        if (mx >= bx1 - 5 && mx <= bx2 + 5 && my >= y - 6 && my <= y + 10) return rec;
+        // Hit on vertical markers (wide swipe area) or label area
+        const inRangeX = mx >= bx1 - 8 && mx <= bx2 + 8;
+        const inMarkerY = my >= sy.profileTop + 2 && my <= sy.profileBottom - 2;
+        const inLabelArea = my >= sy.profileTop - 4 && my <= sy.profileTop + 60;
+        if (inRangeX && (inMarkerY || inLabelArea)) return rec;
     }
     return null;
 }
@@ -1549,6 +1656,13 @@ function updateSelectedEditorFields() {
         document.getElementById('sel-el-km').value = p.km;
         document.getElementById('sel-el-m').value = p.m;
         document.getElementById('sel-el-y').value = item.y;
+        // Also populate quick-add fields
+        const pk = Math.floor(p.m / 100);
+        const m = p.m % 100;
+        document.getElementById('el-km').value = p.km;
+        document.getElementById('el-pk').value = pk;
+        document.getElementById('el-m').value = m;
+        document.getElementById('el-y').value = item.y;
     } else if (t === 'slopes') {
         const s = fromPos(item.startPos);
         const e = fromPos(item.endPos);
@@ -1577,8 +1691,6 @@ function updateSelectedEditorFields() {
             document.getElementById('sel-rc-end-m').value = e.m;
             document.getElementById('sel-rc-category').value = item.category;
             document.getElementById('sel-rc-text').value = item.text || '';
-            document.getElementById('sel-rc-speed').value = item.speed || '';
-            document.getElementById('sel-rc-speed-color').value = item.speedColor || 'red';
         } else if (t === 'speedLimits') {
             const s = fromPos(item.startPos);
             const e = fromPos(item.endPos);
@@ -1628,6 +1740,33 @@ function setupSaveHandler(type, fieldMap) {
     document.querySelector(`[data-close="${type}"]`).addEventListener('click', closeSelectedEditor);
 }
 
+// Auto-apply: on input change, update the item immediately and redraw
+function setupAutoApply(type, fieldMap) {
+    fieldMap.forEach(([inputId, field, parser]) => {
+        const el = document.getElementById(inputId);
+        if (!el) return;
+        el.addEventListener('input', () => {
+            const item = findItemById(type, state.selectedId);
+            if (!item) return;
+            const val = el.value;
+            item[field] = parser ? parser(val) : val;
+            draw();
+        });
+    });
+}
+// Post-process auto-apply for km+m compound fields
+function debounceAutoApply(type, fn) {
+    const allInputs = document.querySelectorAll(`#sel-${type} input[type="number"]`);
+    allInputs.forEach(el => {
+        el.addEventListener('input', () => {
+            const item = findItemById(type, state.selectedId);
+            if (!item) return;
+            fn(item);
+            draw();
+        });
+    });
+}
+
 setupSaveHandler('stations', [
     ['sel-st-name', 'name'],
     ['sel-st-km', '_km', parseInt],
@@ -1650,6 +1789,20 @@ document.querySelector('[data-save="stations"]').addEventListener('click', () =>
     refreshEditorList('stations');
     draw();
 });
+setupAutoApply('stations', [
+    ['sel-st-name', 'name'],
+    ['sel-st-km', '_km', parseInt],
+    ['sel-st-m', '_m', parseInt],
+    ['sel-st-start-km', '_skm', parseInt],
+    ['sel-st-start-m', '_sm', parseInt],
+    ['sel-st-end-km', '_ekm', parseInt],
+    ['sel-st-end-m', '_em', parseInt]
+]);
+debounceAutoApply('stations', (item) => {
+    item.position = toPos(item._km, item._m);
+    item.start = toPos(item._skm, item._sm);
+    item.end = toPos(item._ekm, item._em);
+});
 
 setupSaveHandler('signals', [
     ['sel-sg-label', 'label'],
@@ -1667,6 +1820,16 @@ document.querySelector('[data-save="signals"]').addEventListener('click', () => 
     refreshEditorList('signals');
     draw();
 });
+setupAutoApply('signals', [
+    ['sel-sg-label', 'label'],
+    ['sel-sg-type', 'type'],
+    ['sel-sg-dir', 'dir'],
+    ['sel-sg-km', '_km', parseInt],
+    ['sel-sg-m', '_m', parseInt]
+]);
+debounceAutoApply('signals', (item) => {
+    item.position = toPos(item._km, item._m);
+});
 
 setupSaveHandler('elevations', [
     ['sel-el-km', '_km', parseInt],
@@ -1682,6 +1845,14 @@ document.querySelector('[data-save="elevations"]').addEventListener('click', () 
     state.data.elevations.sort((a, b) => a.position - b.position);
     refreshEditorList('elevations');
     draw();
+});
+setupAutoApply('elevations', [
+    ['sel-el-km', '_km', parseInt],
+    ['sel-el-m', '_m', parseInt],
+    ['sel-el-y', 'y', parseFloat]
+]);
+debounceAutoApply('elevations', (item) => {
+    item.position = toPos(item._km, item._m);
 });
 
 setupSaveHandler('slopes', [
@@ -1702,6 +1873,18 @@ document.querySelector('[data-save="slopes"]').addEventListener('click', () => {
     state.data.slopes.sort((a, b) => a.startPos - b.startPos);
     refreshEditorList('slopes');
     draw();
+});
+setupAutoApply('slopes', [
+    ['sel-sl-start-km', '_skm', parseInt],
+    ['sel-sl-start-m', '_sm', parseInt],
+    ['sel-sl-end-km', '_ekm', parseInt],
+    ['sel-sl-end-m', '_em', parseInt],
+    ['sel-sl-grad', 'gradient', parseInt],
+    ['sel-sl-dir', 'direction']
+]);
+debounceAutoApply('slopes', (item) => {
+    item.startPos = toPos(item._skm, item._sm);
+    item.endPos = toPos(item._ekm, item._em);
 });
 
 setupSaveHandler('curves', [
@@ -1724,6 +1907,19 @@ document.querySelector('[data-save="curves"]').addEventListener('click', () => {
     refreshEditorList('curves');
     draw();
 });
+setupAutoApply('curves', [
+    ['sel-cv-start-km', '_skm', parseInt],
+    ['sel-cv-start-m', '_sm', parseInt],
+    ['sel-cv-end-km', '_ekm', parseInt],
+    ['sel-cv-end-m', '_em', parseInt],
+    ['sel-cv-type', 'type'],
+    ['sel-cv-radius', 'radius', parseInt],
+    ['sel-cv-dir', 'curveDir']
+]);
+debounceAutoApply('curves', (item) => {
+    item.startPos = toPos(item._skm, item._sm);
+    item.endPos = toPos(item._ekm, item._em);
+});
 
 setupSaveHandler('crossings', [
     ['sel-cr-name', 'label'],
@@ -1738,6 +1934,14 @@ document.querySelector('[data-save="crossings"]').addEventListener('click', () =
     refreshEditorList('crossings');
     draw();
 });
+setupAutoApply('crossings', [
+    ['sel-cr-name', 'label'],
+    ['sel-cr-km', '_km', parseInt],
+    ['sel-cr-m', '_m', parseInt]
+]);
+debounceAutoApply('crossings', (item) => {
+    item.position = toPos(item._km, item._m);
+});
 
 setupSaveHandler('recommendations', [
     ['sel-rc-start-km', '_skm', parseInt],
@@ -1745,9 +1949,7 @@ setupSaveHandler('recommendations', [
     ['sel-rc-end-km', '_ekm', parseInt],
     ['sel-rc-end-m', '_em', parseInt],
     ['sel-rc-category', 'category'],
-    ['sel-rc-text', 'text'],
-    ['sel-rc-speed', 'speed', parseInt],
-    ['sel-rc-speed-color', 'speedColor']
+    ['sel-rc-text', 'text']
 ]);
 document.querySelector('[data-save="recommendations"]').addEventListener('click', () => {
     const item = findItemById('recommendations', state.selectedId);
@@ -1758,6 +1960,18 @@ document.querySelector('[data-save="recommendations"]').addEventListener('click'
     state.data.recommendations.sort((a, b) => a.startPos - b.startPos);
     refreshEditorList('recommendations');
     draw();
+});
+setupAutoApply('recommendations', [
+    ['sel-rc-start-km', '_skm', parseInt],
+    ['sel-rc-start-m', '_sm', parseInt],
+    ['sel-rc-end-km', '_ekm', parseInt],
+    ['sel-rc-end-m', '_em', parseInt],
+    ['sel-rc-category', 'category'],
+    ['sel-rc-text', 'text']
+]);
+debounceAutoApply('recommendations', (item) => {
+    item.startPos = toPos(item._skm, item._sm);
+    item.endPos = toPos(item._ekm, item._em);
 });
 
 setupSaveHandler('speedLimits', [
@@ -1778,6 +1992,18 @@ document.querySelector('[data-save="speedLimits"]').addEventListener('click', ()
     refreshEditorList('speedLimits');
     draw();
 });
+setupAutoApply('speedLimits', [
+    ['sel-sp-start-km', '_skm', parseInt],
+    ['sel-sp-start-m', '_sm', parseInt],
+    ['sel-sp-end-km', '_ekm', parseInt],
+    ['sel-sp-end-m', '_em', parseInt],
+    ['sel-sp-speed', 'speed', parseInt],
+    ['sel-sp-remark', 'remark']
+]);
+debounceAutoApply('speedLimits', (item) => {
+    item.startPos = toPos(item._skm, item._sm);
+    item.endPos = toPos(item._ekm, item._em);
+});
 
 // ============================================================
 // LEGEND TOGGLE
@@ -1785,25 +2011,6 @@ document.querySelector('[data-save="speedLimits"]').addEventListener('click', ()
 document.getElementById('legendHeader').addEventListener('click', () => {
     document.getElementById('legend').classList.toggle('collapsed');
 });
-
-// ============================================================
-// RESTRICTION FIELDS TOGGLE
-// ============================================================
-function toggleRestrictionFields() {
-    const cat = document.getElementById('rc-category').value;
-    document.getElementById('rc-restriction-fields').style.display = cat === 'restriction' ? 'flex' : 'none';
-    const selCat = document.getElementById('sel-rc-category');
-    if (selCat) {
-        document.getElementById('sel-rc-restriction-fields').style.display = selCat.value === 'restriction' ? 'flex' : 'none';
-    }
-}
-// Bind to sel-rc-category change too
-document.addEventListener('change', function(e) {
-    if (e.target && e.target.id === 'sel-rc-category') {
-        document.getElementById('sel-rc-restriction-fields').style.display = e.target.value === 'restriction' ? 'flex' : 'none';
-    }
-});
-toggleRestrictionFields();
 
 // ============================================================
 // EDITOR PANEL
@@ -1815,7 +2022,7 @@ const closeEditorBtn = document.getElementById('closeEditorBtn');
 editBtn.addEventListener('click', () => {
     state.editMode = !state.editMode;
     editBtn.classList.toggle('active', state.editMode);
-    editorPanel.classList.add('open');
+    editorPanel.classList.toggle('open');
     canvas.classList.toggle('edit-mode', state.editMode);
     document.getElementById('editBanner').classList.toggle('show', state.editMode);
     document.getElementById('statusDot').classList.toggle('edit', state.editMode);
@@ -1872,18 +2079,139 @@ document.getElementById('addSignalBtn').addEventListener('click', () => {
     selectItem('signals', sig.id, true);
 });
 
-document.getElementById('addElevBtn').addEventListener('click', () => {
-    const pt = {
-        id: newId(),
-        position: readKmM('el-km', 'el-m'),
-        y: parseFloat(document.getElementById('el-y').value)
-    };
-    state.data.elevations.push(pt);
-        saveSnapshot();
+// Elevation quick-input: tab/enter navigation + auto height
+const elevInputs = ['el-km', 'el-pk', 'el-m', 'el-y'];
+elevInputs.forEach((id, i) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('keydown', (e) => {
+        // Tab → next field
+        if (e.key === 'Tab' && !e.shiftKey) {
+            e.preventDefault();
+            const next = elevInputs[i + 1];
+            if (next) document.getElementById(next).focus();
+        }
+        // Shift+Tab → previous field
+        if (e.key === 'Tab' && e.shiftKey) {
+            e.preventDefault();
+            const prev = elevInputs[i - 1];
+            if (prev) document.getElementById(prev).focus();
+        }
+        // Enter → add point
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            addElevationPoint();
+        }
+    });
+});
+// Auto-calc height from previous point when km changes
+document.getElementById('el-km').addEventListener('input', autoCalcElevY);
+document.getElementById('el-pk').addEventListener('input', autoCalcElevY);
+document.getElementById('el-m').addEventListener('input', autoCalcElevY);
+
+function autoCalcElevY() {
+    const yField = document.getElementById('el-y');
+    // Don't auto-calc if user has manually set a value
+    if (yField.dataset.userSet === 'true') return;
+    
+    const km = parseInt(document.getElementById('el-km').value) || 0;
+    const pk = parseInt(document.getElementById('el-pk').value) || 0;
+    const m = parseInt(document.getElementById('el-m').value) || 0;
+    const pos = toPos(km, pk * 100 + m);
+    const elevs = state.data.elevations;
+    
+    // Find previous point
+    let prev = null;
+    for (const e of elevs) {
+        if (e.position <= pos) prev = e;
+        if (e.position >= pos) break;
+    }
+    
+    if (prev && prev.position < pos) {
+        const diff = (pos - prev.position) * 1000; // meters
+        if (diff > 0) {
+            // Interpolate from previous point
+            yField.placeholder = `~${prev.y}`;
+            yField.value = '';
+        }
+    } else if (prev) {
+        yField.placeholder = `~${prev.y}`;
+        yField.value = '';
+    } else if (elevs.length > 0) {
+        yField.placeholder = `~${elevs[0].y}`;
+        yField.value = '';
+    } else {
+        yField.placeholder = 'авто';
+    }
+}
+// Mark Y as user-set when user edits it
+document.getElementById('el-y').addEventListener('input', () => {
+    if (document.getElementById('el-y').value) {
+        document.getElementById('el-y').dataset.userSet = 'true';
+    } else {
+        delete document.getElementById('el-y').dataset.userSet;
+    }
+});
+
+function addElevationPoint() {
+    const km = parseInt(document.getElementById('el-km').value) || 0;
+    const pk = parseInt(document.getElementById('el-pk').value) || 0;
+    const m = parseInt(document.getElementById('el-m').value) || 0;
+    const pos = toPos(km, pk * 100 + m);
+    const elevs = state.data.elevations;
+    
+    // Auto-calculate height if empty
+    let y = parseFloat(document.getElementById('el-y').value);
+    if (isNaN(y)) {
+        let prev = null;
+        for (const e of elevs) {
+            if (e.position <= pos) prev = e;
+            if (e.position >= pos) break;
+        }
+        y = prev ? prev.y : 5;
+    }
+    
+    // Check if point already exists at same position — update instead
+    const existing = elevs.find(e => Math.abs(e.position - pos) < 0.001);
+    if (existing) {
+        existing.y = Math.round(y * 10) / 10;
         state.data.elevations.sort((a, b) => a.position - b.position);
         refreshEditorList('elevations');
-        selectItem('elevations', pt.id, true);
-});
+        selectItem('elevations', existing.id, true);
+        draw();
+        prepNextElevPoint(km, pk, m);
+        return;
+    }
+    
+    const pt = {
+        id: newId(),
+        position: pos,
+        y: Math.round(y * 10) / 10
+    };
+    state.data.elevations.push(pt);
+    saveSnapshot();
+    state.data.elevations.sort((a, b) => a.position - b.position);
+    refreshEditorList('elevations');
+    selectItem('elevations', pt.id, true);
+    draw();
+    prepNextElevPoint(km, pk, m);
+}
+
+function prepNextElevPoint(km, pk, m) {
+    let nextPk = pk + 1;
+    let nextM = m;
+    let nextKm = km;
+    if (nextPk > 9) { nextPk = 0; nextKm++; }
+    document.getElementById('el-km').value = nextKm;
+    document.getElementById('el-pk').value = nextPk;
+    document.getElementById('el-m').value = nextM;
+    document.getElementById('el-y').value = '';
+    delete document.getElementById('el-y').dataset.userSet;
+    document.getElementById('el-km').focus();
+    autoCalcElevY();
+}
+
+document.getElementById('addElevBtn').addEventListener('click', addElevationPoint);
 
 document.getElementById('addSlopeBtn').addEventListener('click', () => {
     const sl = {
@@ -1932,10 +2260,6 @@ document.getElementById('addRecBtn').addEventListener('click', () => {
             startPos, endPos,
             category, text
         };
-        if (category === 'restriction') {
-            rec.speed = parseInt(document.getElementById('rc-speed').value) || 60;
-            rec.speedColor = document.getElementById('rc-speed-color').value;
-        }
         saveSnapshot();
         state.data.recommendations.push(rec);
         state.data.recommendations.sort((a, b) => a.startPos - b.startPos);
@@ -1983,7 +2307,7 @@ function refreshEditorList(type) {
         speedLimits: 'speedLimitsList', crossings: 'crossingsList'
     };
     const typeColors = { passing: '#ffa726', input: '#66bb6a', maneuver: '#ab47bc', output: '#ef5350' };
-    const categoryColors = { note: '#d29922', warning: '#f85149', restriction: '#a371f7', info: '#58a6ff' };
+    const categoryColors = { note: '#d29922', warning: '#f85149', info: '#58a6ff' };
     const list = document.getElementById(listIdMap[type]);
     if (!list) return;
     list.innerHTML = '';
@@ -2117,6 +2441,7 @@ let CURRENT_ROUTE_ID = null;
 function loadRoute(routeId) {
     const route = ROUTES_DATA && ROUTES_DATA.routes[routeId];
     if (!route) return;
+    state.importedFromFile = false;
     CURRENT_ROUTE_ID = routeId;
     saveSnapshot();
     loadDemo();
@@ -2335,6 +2660,8 @@ document.getElementById('importInput').addEventListener('change', (e) => {
                             speedLimits: parsed.speedLimits || [],
                             crossings: parsed.crossings || []
                         };
+                        state.importedFromFile = true;
+                        CURRENT_ROUTE_ID = null;
                         saveSnapshot();
                         saveToLocalStorage();
                         ['stations','signals','elevations','slopes','curves','recommendations','speedLimits','crossings'].forEach(refreshEditorList);
@@ -2369,6 +2696,24 @@ function updateStats() {
     document.getElementById('statCr').textContent = state.data.crossings.length;
     updateRouteLabel();
     updateRangeLabel();
+    // Update data source indicator in status bar
+    const sourceEl = document.getElementById('dataSource');
+    if (sourceEl) {
+        if (state.importedFromFile) {
+            sourceEl.textContent = '📂 Файл';
+            sourceEl.style.color = '#58a6ff';
+        } else if (CURRENT_ROUTE_ID) {
+            const route = ROUTES_DATA && ROUTES_DATA.routes[CURRENT_ROUTE_ID];
+            sourceEl.textContent = route ? route.name : '🗺 Маршрут';
+            sourceEl.style.color = '#d29922';
+        } else if (state.data.stations.length) {
+            sourceEl.textContent = '💾 Сохр.';
+            sourceEl.style.color = '#8b949e';
+        } else {
+            sourceEl.textContent = '⚡ Новый';
+            sourceEl.style.color = '#8b949e';
+        }
+    }
 }
 
 // ============================================================

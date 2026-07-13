@@ -1,1555 +1,1543 @@
 {
   "_version": "0.0.1",
-  "_exportedAt": "2026-07-12T14:20:05.476Z",
+  "_exportedAt": "2026-07-13T07:10:01.138Z",
   "stations": [
     {
-      "id": "id_11",
+      "id": "id_1417",
       "name": "Кинель",
       "position": 1144,
       "start": 1142,
       "end": 1146
     },
     {
-      "id": "id_10",
+      "id": "id_1416",
       "name": "Тургеньевка",
       "position": 1152.2,
       "start": 1151,
       "end": 1153.5
     },
     {
-      "id": "id_9",
+      "id": "id_1415",
       "name": "Георгиевка",
       "position": 1164.1,
       "start": 1163,
       "end": 1165.5
     },
     {
-      "id": "id_8",
+      "id": "id_1414",
       "name": "Кротовка",
       "position": 1177.3,
       "start": 1176,
       "end": 1178.5
     },
     {
-      "id": "id_7",
+      "id": "id_1413",
       "name": "Новоотрадная",
       "position": 1192.4,
       "start": 1191,
       "end": 1193.8
     },
     {
-      "id": "id_6",
+      "id": "id_1412",
       "name": "Толкай",
       "position": 1209.4,
       "start": 1208,
       "end": 1210.8
     },
     {
-      "id": "id_5",
+      "id": "id_1411",
       "name": "Подбельская",
       "position": 1234,
       "start": 1232.5,
       "end": 1235.5
     },
     {
-      "id": "id_4",
+      "id": "id_1410",
       "name": "Бугуруслан",
       "position": 1277.1,
       "start": 1275,
       "end": 1279
     },
     {
-      "id": "id_3",
+      "id": "id_1409",
       "name": "Филипповка",
       "position": 1331.2,
       "start": 1330,
       "end": 1332.5
     },
     {
-      "id": "id_2",
+      "id": "id_1408",
       "name": "Сарай-Гир",
       "position": 1349.7,
       "start": 1348.5,
       "end": 1350.8
     },
     {
-      "id": "id_349",
-      "position": 1371.2,
+      "id": "id_1407",
       "name": "Абдулино",
-      "start": 1370.05,
-      "end": 1374.2
+      "position": 1373,
+      "start": 1370,
+      "end": 1377.308
     }
   ],
   "signals": [
     {
-      "id": "id_127",
+      "id": "id_1533",
       "position": 1360,
       "type": "passing",
       "label": "5",
       "dir": "odd"
     },
     {
-      "id": "id_128",
+      "id": "id_1534",
       "position": 1348.5,
       "type": "passing",
       "label": "Н",
       "dir": "odd"
     },
     {
-      "id": "id_129",
+      "id": "id_1535",
       "position": 1347.2,
       "type": "passing",
       "label": "3",
       "dir": "odd"
     },
     {
-      "id": "id_130",
+      "id": "id_1536",
       "position": 1331.2,
       "type": "input",
       "label": "Н",
       "dir": "odd"
     },
     {
-      "id": "id_131",
+      "id": "id_1537",
       "position": 1330.2,
       "type": "output",
       "label": "Н1",
       "dir": "odd"
     },
     {
-      "id": "id_132",
+      "id": "id_1538",
       "position": 1327.1,
       "type": "passing",
       "label": "3",
       "dir": "odd"
     },
     {
-      "id": "id_133",
+      "id": "id_1539",
       "position": 1310.6,
       "type": "passing",
       "label": "ОС",
       "dir": "odd"
     },
     {
-      "id": "id_134",
+      "id": "id_1540",
       "position": 1308.5,
       "type": "passing",
       "label": "4",
       "dir": "odd"
     },
     {
-      "id": "id_135",
+      "id": "id_1541",
       "position": 1278.2,
       "type": "input",
       "label": "Н",
       "dir": "odd"
     },
     {
-      "id": "id_136",
+      "id": "id_1542",
       "position": 1277.1,
       "type": "output",
       "label": "Н1",
       "dir": "odd"
     },
     {
-      "id": "id_137",
+      "id": "id_1543",
       "position": 1269.9,
       "type": "passing",
       "label": "3",
       "dir": "odd"
     },
     {
-      "id": "id_138",
+      "id": "id_1544",
       "position": 1256,
       "type": "passing",
       "label": "5",
       "dir": "odd"
     },
     {
-      "id": "id_139",
+      "id": "id_1545",
       "position": 1245.4,
       "type": "passing",
       "label": "3",
       "dir": "odd"
     },
     {
-      "id": "id_140",
+      "id": "id_1546",
       "position": 1239.2,
       "type": "passing",
       "label": "1",
       "dir": "odd"
     },
     {
-      "id": "id_141",
+      "id": "id_1547",
       "position": 1235.4,
       "type": "input",
       "label": "Н",
       "dir": "odd"
     },
     {
-      "id": "id_142",
+      "id": "id_1548",
       "position": 1230.1,
       "type": "passing",
       "label": "23",
       "dir": "odd"
     },
     {
-      "id": "id_143",
+      "id": "id_1549",
       "position": 1218.4,
       "type": "passing",
       "label": "3",
       "dir": "odd"
     },
     {
-      "id": "id_144",
+      "id": "id_1550",
       "position": 1209.4,
       "type": "input",
       "label": "Н",
       "dir": "odd"
     },
     {
-      "id": "id_145",
+      "id": "id_1551",
       "position": 1200,
       "type": "passing",
       "label": "9",
       "dir": "odd"
     },
     {
-      "id": "id_146",
+      "id": "id_1552",
       "position": 1192.4,
       "type": "passing",
       "label": "4",
       "dir": "odd"
     },
     {
-      "id": "id_147",
+      "id": "id_1553",
       "position": 1189.1,
       "type": "passing",
       "label": "11",
       "dir": "odd"
     },
     {
-      "id": "id_148",
+      "id": "id_1554",
       "position": 1177.3,
       "type": "input",
       "label": "Н",
       "dir": "odd"
     },
     {
-      "id": "id_149",
+      "id": "id_1555",
       "position": 1164.1,
       "type": "input",
       "label": "Н",
       "dir": "odd"
     },
     {
-      "id": "id_150",
+      "id": "id_1556",
       "position": 1152.2,
       "type": "output",
       "label": "Н1",
       "dir": "odd"
     },
     {
-      "id": "id_151",
+      "id": "id_1557",
       "position": 1148.7,
       "type": "passing",
       "label": "7",
       "dir": "odd"
     },
     {
-      "id": "id_152",
+      "id": "id_1558",
       "position": 1145,
       "type": "input",
       "label": "Н",
       "dir": "odd"
     },
     {
-      "id": "id_356",
+      "id": "id_1755",
       "position": 1370.85,
-      "type": "maneuver",
-      "label": "НМ1",
-      "dir": "odd"
-    },
-    {
-      "id": "id_357",
-      "position": 1369.8,
       "type": "output",
-      "label": "НМ1Н",
+      "label": "Н1Ч",
       "dir": "odd"
     }
   ],
   "elevations": [
     {
-      "id": "id_126",
+      "id": "id_1532",
       "position": 1144,
       "y": 116
     },
     {
-      "id": "id_125",
+      "id": "id_1531",
       "position": 1146,
       "y": 118
     },
     {
-      "id": "id_124",
+      "id": "id_1530",
       "position": 1148.7,
       "y": 120
     },
     {
-      "id": "id_123",
+      "id": "id_1529",
       "position": 1150,
       "y": 121
     },
     {
-      "id": "id_122",
+      "id": "id_1528",
       "position": 1152.2,
       "y": 122
     },
     {
-      "id": "id_121",
+      "id": "id_1527",
       "position": 1154,
       "y": 124
     },
     {
-      "id": "id_120",
+      "id": "id_1526",
       "position": 1156.9,
       "y": 126
     },
     {
-      "id": "id_119",
+      "id": "id_1525",
       "position": 1158,
       "y": 127
     },
     {
-      "id": "id_118",
+      "id": "id_1524",
       "position": 1160,
       "y": 128
     },
     {
-      "id": "id_117",
+      "id": "id_1523",
       "position": 1162,
       "y": 127
     },
     {
-      "id": "id_116",
+      "id": "id_1522",
       "position": 1164.1,
       "y": 125
     },
     {
-      "id": "id_115",
+      "id": "id_1521",
       "position": 1166,
       "y": 126
     },
     {
-      "id": "id_114",
+      "id": "id_1520",
       "position": 1168,
       "y": 128
     },
     {
-      "id": "id_113",
+      "id": "id_1519",
       "position": 1170.1,
       "y": 130
     },
     {
-      "id": "id_112",
+      "id": "id_1518",
       "position": 1171,
       "y": 129
     },
     {
-      "id": "id_111",
+      "id": "id_1517",
       "position": 1173.3,
       "y": 127
     },
     {
-      "id": "id_110",
+      "id": "id_1516",
       "position": 1175,
       "y": 128
     },
     {
-      "id": "id_109",
+      "id": "id_1515",
       "position": 1177.3,
       "y": 130
     },
     {
-      "id": "id_108",
+      "id": "id_1514",
       "position": 1180,
       "y": 132
     },
     {
-      "id": "id_107",
+      "id": "id_1513",
       "position": 1182.2,
       "y": 134
     },
     {
-      "id": "id_106",
+      "id": "id_1512",
       "position": 1184,
       "y": 135
     },
     {
-      "id": "id_105",
+      "id": "id_1511",
       "position": 1186,
       "y": 133
     },
     {
-      "id": "id_104",
+      "id": "id_1510",
       "position": 1189.1,
       "y": 130
     },
     {
-      "id": "id_103",
+      "id": "id_1509",
       "position": 1190,
       "y": 128
     },
     {
-      "id": "id_102",
+      "id": "id_1508",
       "position": 1192.4,
       "y": 125
     },
     {
-      "id": "id_101",
+      "id": "id_1507",
       "position": 1194,
       "y": 127
     },
     {
-      "id": "id_100",
+      "id": "id_1506",
       "position": 1196.7,
       "y": 129
     },
     {
-      "id": "id_99",
+      "id": "id_1505",
       "position": 1198,
       "y": 130
     },
     {
-      "id": "id_98",
+      "id": "id_1504",
       "position": 1200.6,
       "y": 132
     },
     {
-      "id": "id_97",
+      "id": "id_1503",
       "position": 1201,
       "y": 133
     },
     {
-      "id": "id_96",
+      "id": "id_1502",
       "position": 1203.5,
       "y": 134
     },
     {
-      "id": "id_95",
+      "id": "id_1501",
       "position": 1204.7,
       "y": 135
     },
     {
-      "id": "id_94",
+      "id": "id_1500",
       "position": 1206.5,
       "y": 137
     },
     {
-      "id": "id_93",
+      "id": "id_1499",
       "position": 1206.8,
       "y": 138
     },
     {
-      "id": "id_92",
+      "id": "id_1498",
       "position": 1207,
       "y": 140
     },
     {
-      "id": "id_91",
+      "id": "id_1497",
       "position": 1209.4,
       "y": 142
     },
     {
-      "id": "id_90",
+      "id": "id_1496",
       "position": 1212.2,
       "y": 144
     },
     {
-      "id": "id_89",
+      "id": "id_1495",
       "position": 1213,
       "y": 143
     },
     {
-      "id": "id_88",
+      "id": "id_1494",
       "position": 1216,
       "y": 142
     },
     {
-      "id": "id_87",
+      "id": "id_1493",
       "position": 1218.4,
       "y": 140
     },
     {
-      "id": "id_86",
+      "id": "id_1492",
       "position": 1219,
       "y": 138
     },
     {
-      "id": "id_85",
+      "id": "id_1491",
       "position": 1221.9,
       "y": 135
     },
     {
-      "id": "id_84",
+      "id": "id_1490",
       "position": 1223,
       "y": 137
     },
     {
-      "id": "id_83",
+      "id": "id_1489",
       "position": 1225,
       "y": 140
     },
     {
-      "id": "id_82",
+      "id": "id_1488",
       "position": 1228,
       "y": 144
     },
     {
-      "id": "id_81",
+      "id": "id_1487",
       "position": 1230.1,
       "y": 146
     },
     {
-      "id": "id_80",
+      "id": "id_1486",
       "position": 1232,
       "y": 148
     },
     {
-      "id": "id_79",
+      "id": "id_1485",
       "position": 1234,
       "y": 150
     },
     {
-      "id": "id_78",
+      "id": "id_1484",
       "position": 1235.4,
       "y": 152
     },
     {
-      "id": "id_77",
+      "id": "id_1483",
       "position": 1236.5,
       "y": 153
     },
     {
-      "id": "id_76",
+      "id": "id_1482",
       "position": 1238.4,
       "y": 155
     },
     {
-      "id": "id_75",
+      "id": "id_1481",
       "position": 1239.2,
       "y": 156
     },
     {
-      "id": "id_74",
+      "id": "id_1480",
       "position": 1240,
       "y": 158
     },
     {
-      "id": "id_73",
+      "id": "id_1479",
       "position": 1242.3,
       "y": 159
     },
     {
-      "id": "id_72",
+      "id": "id_1478",
       "position": 1243.2,
       "y": 160
     },
     {
-      "id": "id_71",
+      "id": "id_1477",
       "position": 1245.4,
       "y": 162
     },
     {
-      "id": "id_70",
+      "id": "id_1476",
       "position": 1247.6,
       "y": 163
     },
     {
-      "id": "id_69",
+      "id": "id_1475",
       "position": 1249.1,
       "y": 166
     },
     {
-      "id": "id_68",
+      "id": "id_1474",
       "position": 1251.6,
       "y": 169
     },
     {
-      "id": "id_67",
+      "id": "id_1473",
       "position": 1253.5,
       "y": 167
     },
     {
-      "id": "id_66",
+      "id": "id_1472",
       "position": 1254.1,
       "y": 165
     },
     {
-      "id": "id_65",
+      "id": "id_1471",
       "position": 1256.9,
       "y": 162
     },
     {
-      "id": "id_64",
+      "id": "id_1470",
       "position": 1259,
       "y": 164
     },
     {
-      "id": "id_63",
+      "id": "id_1469",
       "position": 1262,
       "y": 166
     },
     {
-      "id": "id_62",
+      "id": "id_1468",
       "position": 1265,
       "y": 168
     },
     {
-      "id": "id_61",
+      "id": "id_1467",
       "position": 1267.2,
       "y": 170
     },
     {
-      "id": "id_60",
+      "id": "id_1466",
       "position": 1269.9,
       "y": 173
     },
     {
-      "id": "id_59",
+      "id": "id_1465",
       "position": 1271.4,
       "y": 175
     },
     {
-      "id": "id_58",
+      "id": "id_1464",
       "position": 1273,
       "y": 173
     },
     {
-      "id": "id_57",
+      "id": "id_1463",
       "position": 1275,
       "y": 170
     },
     {
-      "id": "id_56",
+      "id": "id_1462",
       "position": 1277.1,
       "y": 172
     },
     {
-      "id": "id_55",
+      "id": "id_1461",
       "position": 1278.2,
       "y": 174
     },
     {
-      "id": "id_54",
+      "id": "id_1460",
       "position": 1280,
       "y": 176
     },
     {
-      "id": "id_53",
+      "id": "id_1459",
       "position": 1283,
       "y": 178
     },
     {
-      "id": "id_52",
+      "id": "id_1458",
       "position": 1286,
       "y": 180
     },
     {
-      "id": "id_51",
+      "id": "id_1457",
       "position": 1289.4,
       "y": 178
     },
     {
-      "id": "id_50",
+      "id": "id_1456",
       "position": 1291.8,
       "y": 175
     },
     {
-      "id": "id_49",
+      "id": "id_1455",
       "position": 1293.8,
       "y": 172
     },
     {
-      "id": "id_48",
+      "id": "id_1454",
       "position": 1295.9,
       "y": 174
     },
     {
-      "id": "id_47",
+      "id": "id_1453",
       "position": 1296.8,
       "y": 176
     },
     {
-      "id": "id_46",
+      "id": "id_1452",
       "position": 1299,
       "y": 180
     },
     {
-      "id": "id_45",
+      "id": "id_1451",
       "position": 1302,
       "y": 183
     },
     {
-      "id": "id_44",
+      "id": "id_1450",
       "position": 1304.6,
       "y": 185
     },
     {
-      "id": "id_43",
+      "id": "id_1449",
       "position": 1306,
       "y": 186
     },
     {
-      "id": "id_42",
+      "id": "id_1448",
       "position": 1308.5,
       "y": 188
     },
     {
-      "id": "id_41",
+      "id": "id_1447",
       "position": 1310.6,
       "y": 186
     },
     {
-      "id": "id_40",
+      "id": "id_1446",
       "position": 1312,
       "y": 184
     },
     {
-      "id": "id_39",
+      "id": "id_1445",
       "position": 1314.1,
       "y": 182
     },
     {
-      "id": "id_38",
+      "id": "id_1444",
       "position": 1316.5,
       "y": 183
     },
     {
-      "id": "id_37",
+      "id": "id_1443",
       "position": 1319,
       "y": 184
     },
     {
-      "id": "id_36",
+      "id": "id_1442",
       "position": 1321.9,
       "y": 186
     },
     {
-      "id": "id_35",
+      "id": "id_1441",
       "position": 1324,
       "y": 188
     },
     {
-      "id": "id_34",
+      "id": "id_1440",
       "position": 1326.3,
       "y": 190
     },
     {
-      "id": "id_33",
+      "id": "id_1439",
       "position": 1327.1,
       "y": 192
     },
     {
-      "id": "id_32",
+      "id": "id_1438",
       "position": 1329,
       "y": 195
     },
     {
-      "id": "id_31",
+      "id": "id_1437",
       "position": 1331.2,
       "y": 193
     },
     {
-      "id": "id_30",
+      "id": "id_1436",
       "position": 1333,
       "y": 195
     },
     {
-      "id": "id_29",
+      "id": "id_1435",
       "position": 1334.7,
       "y": 198
     },
     {
-      "id": "id_28",
+      "id": "id_1434",
       "position": 1335.4,
       "y": 200
     },
     {
-      "id": "id_27",
+      "id": "id_1433",
       "position": 1338,
       "y": 202
     },
     {
-      "id": "id_26",
+      "id": "id_1432",
       "position": 1340.8,
       "y": 198
     },
     {
-      "id": "id_25",
+      "id": "id_1431",
       "position": 1342.2,
       "y": 195
     },
     {
-      "id": "id_24",
+      "id": "id_1430",
       "position": 1344,
       "y": 198
     },
     {
-      "id": "id_23",
+      "id": "id_1429",
       "position": 1346,
       "y": 200
     },
     {
-      "id": "id_22",
+      "id": "id_1428",
       "position": 1347.2,
       "y": 205
     },
     {
-      "id": "id_21",
+      "id": "id_1427",
       "position": 1348.5,
       "y": 210
     },
     {
-      "id": "id_20",
+      "id": "id_1426",
       "position": 1349.7,
       "y": 212
     },
     {
-      "id": "id_19",
+      "id": "id_1425",
       "position": 1354,
       "y": 216
     },
     {
-      "id": "id_18",
+      "id": "id_1424",
       "position": 1356,
       "y": 218
     },
     {
-      "id": "id_17",
+      "id": "id_1423",
       "position": 1358,
       "y": 215
     },
     {
-      "id": "id_16",
-      "position": 1360.8,
-      "y": 210
+      "id": "id_1422",
+      "position": 1362.492,
+      "y": 203.4
     },
     {
-      "id": "id_15",
-      "position": 1362,
-      "y": 207
+      "id": "id_1759",
+      "position": 1363.475,
+      "y": 196.7
     },
     {
-      "id": "id_14",
-      "position": 1363.3,
-      "y": 205
+      "id": "id_1421",
+      "position": 1364.033,
+      "y": 200.4
     },
     {
-      "id": "id_13",
-      "position": 1364.8,
-      "y": 208
+      "id": "id_1420",
+      "position": 1364.467,
+      "y": 202.7
     },
     {
-      "id": "id_347",
-      "position": 1365.275,
-      "y": 208.6
+      "id": "id_1758",
+      "position": 1368.008,
+      "y": 185.6
     },
     {
-      "id": "id_351",
-      "position": 1370.525,
-      "y": 178.9
+      "id": "id_1419",
+      "position": 1369.275,
+      "y": 189.3
     },
     {
-      "id": "id_352",
-      "position": 1371.983,
+      "id": "id_1757",
+      "position": 1370.85,
       "y": 187.1
     },
     {
-      "id": "id_350",
-      "position": 1372.5,
-      "y": 199.7
-    },
-    {
-      "id": "id_348",
-      "position": 1374.942,
-      "y": 210.8
+      "id": "id_1418",
+      "position": 1377.8,
+      "y": 198.9
     }
   ],
   "slopes": [
     {
-      "id": "id_249",
+      "id": "id_1655",
       "startPos": 1148.7,
       "endPos": 1144,
       "gradient": 4,
       "direction": "down"
     },
     {
-      "id": "id_248",
+      "id": "id_1654",
       "startPos": 1150,
       "endPos": 1148.7,
       "gradient": 7,
       "direction": "down"
     },
     {
-      "id": "id_247",
+      "id": "id_1653",
       "startPos": 1152.2,
       "endPos": 1150,
       "gradient": 4,
       "direction": "down"
     },
     {
-      "id": "id_246",
+      "id": "id_1652",
       "startPos": 1154,
       "endPos": 1152.2,
       "gradient": 7,
       "direction": "down"
     },
     {
-      "id": "id_245",
+      "id": "id_1651",
       "startPos": 1156.9,
       "endPos": 1154,
       "gradient": 5,
       "direction": "down"
     },
     {
-      "id": "id_244",
+      "id": "id_1650",
       "startPos": 1158,
       "endPos": 1156.9,
       "gradient": 4,
       "direction": "down"
     },
     {
-      "id": "id_243",
+      "id": "id_1649",
       "startPos": 1160,
       "endPos": 1158,
       "gradient": 3,
       "direction": "down"
     },
     {
-      "id": "id_242",
+      "id": "id_1648",
       "startPos": 1162,
       "endPos": 1160,
       "gradient": 3,
       "direction": "up"
     },
     {
-      "id": "id_241",
+      "id": "id_1647",
       "startPos": 1164.1,
       "endPos": 1162,
       "gradient": 5,
       "direction": "up"
     },
     {
-      "id": "id_240",
+      "id": "id_1646",
       "startPos": 1166,
       "endPos": 1164.1,
       "gradient": 4,
       "direction": "down"
     },
     {
-      "id": "id_239",
+      "id": "id_1645",
       "startPos": 1168,
       "endPos": 1166,
       "gradient": 5,
       "direction": "down"
     },
     {
-      "id": "id_238",
+      "id": "id_1644",
       "startPos": 1170.1,
       "endPos": 1168,
       "gradient": 3,
       "direction": "down"
     },
     {
-      "id": "id_237",
+      "id": "id_1643",
       "startPos": 1171,
       "endPos": 1170.1,
       "gradient": 4,
       "direction": "up"
     },
     {
-      "id": "id_236",
+      "id": "id_1642",
       "startPos": 1173.3,
       "endPos": 1171,
       "gradient": 6,
       "direction": "up"
     },
     {
-      "id": "id_235",
+      "id": "id_1641",
       "startPos": 1175,
       "endPos": 1173.3,
       "gradient": 5,
       "direction": "down"
     },
     {
-      "id": "id_234",
+      "id": "id_1640",
       "startPos": 1177.3,
       "endPos": 1175,
       "gradient": 4,
       "direction": "down"
     },
     {
-      "id": "id_233",
+      "id": "id_1639",
       "startPos": 1180,
       "endPos": 1177.3,
       "gradient": 6,
       "direction": "down"
     },
     {
-      "id": "id_232",
+      "id": "id_1638",
       "startPos": 1182.2,
       "endPos": 1180,
       "gradient": 4,
       "direction": "down"
     },
     {
-      "id": "id_231",
+      "id": "id_1637",
       "startPos": 1184,
       "endPos": 1182.2,
       "gradient": 3,
       "direction": "down"
     },
     {
-      "id": "id_230",
+      "id": "id_1636",
       "startPos": 1186,
       "endPos": 1184,
       "gradient": 5,
       "direction": "up"
     },
     {
-      "id": "id_229",
+      "id": "id_1635",
       "startPos": 1189.1,
       "endPos": 1186,
       "gradient": 6,
       "direction": "up"
     },
     {
-      "id": "id_228",
+      "id": "id_1634",
       "startPos": 1190,
       "endPos": 1189.1,
       "gradient": 11,
       "direction": "up"
     },
     {
-      "id": "id_227",
+      "id": "id_1633",
       "startPos": 1192.4,
       "endPos": 1190,
       "gradient": 8,
       "direction": "up"
     },
     {
-      "id": "id_226",
+      "id": "id_1632",
       "startPos": 1194,
       "endPos": 1192.4,
       "gradient": 5,
       "direction": "down"
     },
     {
-      "id": "id_225",
+      "id": "id_1631",
       "startPos": 1196.7,
       "endPos": 1194,
       "gradient": 3,
       "direction": "down"
     },
     {
-      "id": "id_224",
+      "id": "id_1630",
       "startPos": 1197,
       "endPos": 1196.7,
       "gradient": 2,
       "direction": "down"
     },
     {
-      "id": "id_223",
+      "id": "id_1629",
       "startPos": 1200.6,
       "endPos": 1197,
       "gradient": 3,
       "direction": "up"
     },
     {
-      "id": "id_222",
+      "id": "id_1628",
       "startPos": 1203.5,
       "endPos": 1200.6,
       "gradient": 4,
       "direction": "up"
     },
     {
-      "id": "id_221",
+      "id": "id_1627",
       "startPos": 1204.7,
       "endPos": 1203.5,
       "gradient": 3,
       "direction": "down"
     },
     {
-      "id": "id_220",
+      "id": "id_1626",
       "startPos": 1206.5,
       "endPos": 1204.7,
       "gradient": 15,
       "direction": "down"
     },
     {
-      "id": "id_219",
+      "id": "id_1625",
       "startPos": 1206.8,
       "endPos": 1206.5,
       "gradient": 8,
       "direction": "up"
     },
     {
-      "id": "id_218",
+      "id": "id_1624",
       "startPos": 1207,
       "endPos": 1206.8,
       "gradient": 15,
       "direction": "down"
     },
     {
-      "id": "id_217",
+      "id": "id_1623",
       "startPos": 1209.4,
       "endPos": 1207,
       "gradient": 3,
       "direction": "down"
     },
     {
-      "id": "id_216",
+      "id": "id_1622",
       "startPos": 1212.2,
       "endPos": 1209.4,
       "gradient": 4,
       "direction": "down"
     },
     {
-      "id": "id_215",
+      "id": "id_1621",
       "startPos": 1215,
       "endPos": 1212.2,
       "gradient": 5,
       "direction": "up"
     },
     {
-      "id": "id_214",
+      "id": "id_1620",
       "startPos": 1218.4,
       "endPos": 1215,
       "gradient": 4,
       "direction": "up"
     },
     {
-      "id": "id_213",
+      "id": "id_1619",
       "startPos": 1219,
       "endPos": 1218.4,
       "gradient": 5,
       "direction": "up"
     },
     {
-      "id": "id_212",
+      "id": "id_1618",
       "startPos": 1221.9,
       "endPos": 1219,
       "gradient": 6,
       "direction": "up"
     },
     {
-      "id": "id_211",
+      "id": "id_1617",
       "startPos": 1223,
       "endPos": 1221.9,
       "gradient": 17,
       "direction": "down"
     },
     {
-      "id": "id_210",
+      "id": "id_1616",
       "startPos": 1227,
       "endPos": 1223,
       "gradient": 8,
       "direction": "down"
     },
     {
-      "id": "id_209",
+      "id": "id_1615",
       "startPos": 1230.1,
       "endPos": 1227,
       "gradient": 6,
       "direction": "down"
     },
     {
-      "id": "id_208",
+      "id": "id_1614",
       "startPos": 1232,
       "endPos": 1230.1,
       "gradient": 4,
       "direction": "down"
     },
     {
-      "id": "id_207",
+      "id": "id_1613",
       "startPos": 1234,
       "endPos": 1232,
       "gradient": 5,
       "direction": "down"
     },
     {
-      "id": "id_206",
+      "id": "id_1612",
       "startPos": 1236.5,
       "endPos": 1234,
       "gradient": 3,
       "direction": "down"
     },
     {
-      "id": "id_205",
+      "id": "id_1611",
       "startPos": 1238.4,
       "endPos": 1236.5,
       "gradient": 5,
       "direction": "down"
     },
     {
-      "id": "id_204",
+      "id": "id_1610",
       "startPos": 1239.2,
       "endPos": 1238.4,
       "gradient": 5,
       "direction": "up"
     },
     {
-      "id": "id_203",
+      "id": "id_1609",
       "startPos": 1242.3,
       "endPos": 1239.2,
       "gradient": 3,
       "direction": "down"
     },
     {
-      "id": "id_202",
+      "id": "id_1608",
       "startPos": 1243.2,
       "endPos": 1242.3,
       "gradient": 1,
       "direction": "down"
     },
     {
-      "id": "id_201",
+      "id": "id_1607",
       "startPos": 1243.8,
       "endPos": 1243.2,
       "gradient": 7,
       "direction": "down"
     },
     {
-      "id": "id_200",
+      "id": "id_1606",
       "startPos": 1245.4,
       "endPos": 1243.8,
       "gradient": 3,
       "direction": "up"
     },
     {
-      "id": "id_199",
+      "id": "id_1605",
       "startPos": 1247.6,
       "endPos": 1245.4,
       "gradient": 4,
       "direction": "down"
     },
     {
-      "id": "id_198",
+      "id": "id_1604",
       "startPos": 1249.1,
       "endPos": 1247.6,
       "gradient": 13,
       "direction": "down"
     },
     {
-      "id": "id_197",
+      "id": "id_1603",
       "startPos": 1251.6,
       "endPos": 1249.1,
       "gradient": 15,
       "direction": "down"
     },
     {
-      "id": "id_196",
+      "id": "id_1602",
       "startPos": 1253.5,
       "endPos": 1251.6,
       "gradient": 5,
       "direction": "up"
     },
     {
-      "id": "id_195",
+      "id": "id_1601",
       "startPos": 1254.1,
       "endPos": 1253.5,
       "gradient": 8,
       "direction": "up"
     },
     {
-      "id": "id_194",
+      "id": "id_1600",
       "startPos": 1256.9,
       "endPos": 1254.1,
       "gradient": 6,
       "direction": "down"
     },
     {
-      "id": "id_193",
+      "id": "id_1599",
       "startPos": 1259,
       "endPos": 1256.9,
       "gradient": 4,
       "direction": "down"
     },
     {
-      "id": "id_192",
+      "id": "id_1598",
       "startPos": 1262,
       "endPos": 1259,
       "gradient": 3,
       "direction": "down"
     },
     {
-      "id": "id_191",
+      "id": "id_1597",
       "startPos": 1265,
       "endPos": 1262,
       "gradient": 3,
       "direction": "down"
     },
     {
-      "id": "id_190",
+      "id": "id_1596",
       "startPos": 1267.2,
       "endPos": 1265,
       "gradient": 4,
       "direction": "down"
     },
     {
-      "id": "id_189",
+      "id": "id_1595",
       "startPos": 1269.9,
       "endPos": 1267.2,
       "gradient": 5,
       "direction": "down"
     },
     {
-      "id": "id_188",
+      "id": "id_1594",
       "startPos": 1271.4,
       "endPos": 1269.9,
       "gradient": 13,
       "direction": "down"
     },
     {
-      "id": "id_187",
+      "id": "id_1593",
       "startPos": 1273,
       "endPos": 1271.4,
       "gradient": 16,
       "direction": "up"
     },
     {
-      "id": "id_186",
+      "id": "id_1592",
       "startPos": 1275,
       "endPos": 1273,
       "gradient": 8,
       "direction": "up"
     },
     {
-      "id": "id_185",
+      "id": "id_1591",
       "startPos": 1277.1,
       "endPos": 1275,
       "gradient": 4,
       "direction": "down"
     },
     {
-      "id": "id_184",
+      "id": "id_1590",
       "startPos": 1278.2,
       "endPos": 1277.1,
       "gradient": 6,
       "direction": "down"
     },
     {
-      "id": "id_183",
+      "id": "id_1589",
       "startPos": 1281,
       "endPos": 1278.2,
       "gradient": 5,
       "direction": "down"
     },
     {
-      "id": "id_182",
+      "id": "id_1588",
       "startPos": 1285,
       "endPos": 1281,
       "gradient": 4,
       "direction": "down"
     },
     {
-      "id": "id_181",
+      "id": "id_1587",
       "startPos": 1289.4,
       "endPos": 1285,
       "gradient": 3,
       "direction": "up"
     },
     {
-      "id": "id_180",
+      "id": "id_1586",
       "startPos": 1291.8,
       "endPos": 1289.4,
       "gradient": 5,
       "direction": "up"
     },
     {
-      "id": "id_179",
+      "id": "id_1585",
       "startPos": 1293.8,
       "endPos": 1291.8,
       "gradient": 17,
       "direction": "up"
     },
     {
-      "id": "id_178",
+      "id": "id_1584",
       "startPos": 1295.9,
       "endPos": 1293.8,
       "gradient": 3,
       "direction": "down"
     },
     {
-      "id": "id_177",
+      "id": "id_1583",
       "startPos": 1296.8,
       "endPos": 1295.9,
       "gradient": 5,
       "direction": "up"
     },
     {
-      "id": "id_176",
+      "id": "id_1582",
       "startPos": 1299,
       "endPos": 1296.8,
       "gradient": 21,
       "direction": "down"
     },
     {
-      "id": "id_175",
+      "id": "id_1581",
       "startPos": 1304.6,
       "endPos": 1299,
       "gradient": 4,
       "direction": "down"
     },
     {
-      "id": "id_174",
+      "id": "id_1580",
       "startPos": 1308.5,
       "endPos": 1304.6,
       "gradient": 3,
       "direction": "down"
     },
     {
-      "id": "id_173",
+      "id": "id_1579",
       "startPos": 1310.6,
       "endPos": 1308.5,
       "gradient": 4,
       "direction": "up"
     },
     {
-      "id": "id_172",
+      "id": "id_1578",
       "startPos": 1314.1,
       "endPos": 1310.6,
       "gradient": 5,
       "direction": "up"
     },
     {
-      "id": "id_171",
+      "id": "id_1577",
       "startPos": 1317,
       "endPos": 1314.1,
       "gradient": 3,
       "direction": "down"
     },
     {
-      "id": "id_170",
+      "id": "id_1576",
       "startPos": 1321.9,
       "endPos": 1317,
       "gradient": 3,
       "direction": "down"
     },
     {
-      "id": "id_169",
+      "id": "id_1575",
       "startPos": 1326.3,
       "endPos": 1321.9,
       "gradient": 4,
       "direction": "down"
     },
     {
-      "id": "id_168",
+      "id": "id_1574",
       "startPos": 1327.1,
       "endPos": 1326.3,
       "gradient": 17,
       "direction": "down"
     },
     {
-      "id": "id_167",
+      "id": "id_1573",
       "startPos": 1330,
       "endPos": 1327.1,
       "gradient": 6,
       "direction": "down"
     },
     {
-      "id": "id_166",
+      "id": "id_1572",
       "startPos": 1331.2,
       "endPos": 1330,
       "gradient": 3,
       "direction": "up"
     },
     {
-      "id": "id_165",
+      "id": "id_1571",
       "startPos": 1333,
       "endPos": 1331.2,
       "gradient": 5,
       "direction": "down"
     },
     {
-      "id": "id_164",
+      "id": "id_1570",
       "startPos": 1334.7,
       "endPos": 1333,
       "gradient": 3,
       "direction": "down"
     },
     {
-      "id": "id_163",
+      "id": "id_1569",
       "startPos": 1335.4,
       "endPos": 1334.7,
       "gradient": 3,
       "direction": "down"
     },
     {
-      "id": "id_162",
+      "id": "id_1568",
       "startPos": 1340.8,
       "endPos": 1335.4,
       "gradient": 4,
       "direction": "down"
     },
     {
-      "id": "id_161",
+      "id": "id_1567",
       "startPos": 1342.2,
       "endPos": 1340.8,
       "gradient": 9,
       "direction": "up"
     },
     {
-      "id": "id_160",
+      "id": "id_1566",
       "startPos": 1347.2,
       "endPos": 1342.2,
       "gradient": 6,
       "direction": "down"
     },
     {
-      "id": "id_159",
+      "id": "id_1565",
       "startPos": 1348.5,
       "endPos": 1347.2,
       "gradient": 17,
       "direction": "down"
     },
     {
-      "id": "id_158",
+      "id": "id_1564",
       "startPos": 1349.7,
       "endPos": 1348.5,
       "gradient": 5,
       "direction": "up"
     },
     {
-      "id": "id_157",
+      "id": "id_1563",
       "startPos": 1355,
       "endPos": 1349.7,
       "gradient": 8,
       "direction": "down"
     },
     {
-      "id": "id_156",
+      "id": "id_1562",
       "startPos": 1360.8,
       "endPos": 1355,
       "gradient": 13,
       "direction": "up"
     },
     {
-      "id": "id_155",
+      "id": "id_1561",
       "startPos": 1363.3,
       "endPos": 1360.8,
       "gradient": 4,
       "direction": "down"
     },
     {
-      "id": "id_154",
+      "id": "id_1560",
       "startPos": 1364.8,
       "endPos": 1363.3,
       "gradient": 3,
       "direction": "up"
     },
     {
-      "id": "id_153",
+      "id": "id_1559",
       "startPos": 1365.8,
       "endPos": 1364.8,
       "gradient": 2,
@@ -1558,7 +1546,7 @@
   ],
   "curves": [
     {
-      "id": "id_271",
+      "id": "id_1677",
       "startPos": 1148,
       "endPos": 1145,
       "type": "curve",
@@ -1566,7 +1554,7 @@
       "curveDir": "left"
     },
     {
-      "id": "id_270",
+      "id": "id_1676",
       "startPos": 1155,
       "endPos": 1153,
       "type": "curve",
@@ -1574,7 +1562,7 @@
       "curveDir": "right"
     },
     {
-      "id": "id_269",
+      "id": "id_1675",
       "startPos": 1165,
       "endPos": 1163,
       "type": "curve",
@@ -1582,7 +1570,7 @@
       "curveDir": "left"
     },
     {
-      "id": "id_268",
+      "id": "id_1674",
       "startPos": 1175,
       "endPos": 1173,
       "type": "curve",
@@ -1590,7 +1578,7 @@
       "curveDir": "right"
     },
     {
-      "id": "id_267",
+      "id": "id_1673",
       "startPos": 1184,
       "endPos": 1182,
       "type": "curve",
@@ -1598,7 +1586,7 @@
       "curveDir": "left"
     },
     {
-      "id": "id_266",
+      "id": "id_1672",
       "startPos": 1190,
       "endPos": 1188,
       "type": "curve",
@@ -1606,7 +1594,7 @@
       "curveDir": "right"
     },
     {
-      "id": "id_265",
+      "id": "id_1671",
       "startPos": 1203.5,
       "endPos": 1201,
       "type": "curve",
@@ -1614,7 +1602,7 @@
       "curveDir": "left"
     },
     {
-      "id": "id_264",
+      "id": "id_1670",
       "startPos": 1212.2,
       "endPos": 1210,
       "type": "curve",
@@ -1622,7 +1610,7 @@
       "curveDir": "right"
     },
     {
-      "id": "id_263",
+      "id": "id_1669",
       "startPos": 1222,
       "endPos": 1220,
       "type": "curve",
@@ -1630,7 +1618,7 @@
       "curveDir": "left"
     },
     {
-      "id": "id_262",
+      "id": "id_1668",
       "startPos": 1230,
       "endPos": 1228,
       "type": "curve",
@@ -1638,7 +1626,7 @@
       "curveDir": "right"
     },
     {
-      "id": "id_261",
+      "id": "id_1667",
       "startPos": 1236,
       "endPos": 1234,
       "type": "curve",
@@ -1646,7 +1634,7 @@
       "curveDir": "left"
     },
     {
-      "id": "id_260",
+      "id": "id_1666",
       "startPos": 1245,
       "endPos": 1242,
       "type": "curve",
@@ -1654,7 +1642,7 @@
       "curveDir": "right"
     },
     {
-      "id": "id_259",
+      "id": "id_1665",
       "startPos": 1255,
       "endPos": 1251.6,
       "type": "curve",
@@ -1662,7 +1650,7 @@
       "curveDir": "left"
     },
     {
-      "id": "id_258",
+      "id": "id_1664",
       "startPos": 1267.2,
       "endPos": 1265,
       "type": "curve",
@@ -1670,7 +1658,7 @@
       "curveDir": "right"
     },
     {
-      "id": "id_257",
+      "id": "id_1663",
       "startPos": 1272,
       "endPos": 1269,
       "type": "curve",
@@ -1678,7 +1666,7 @@
       "curveDir": "left"
     },
     {
-      "id": "id_256",
+      "id": "id_1662",
       "startPos": 1295.9,
       "endPos": 1293.8,
       "type": "curve",
@@ -1686,7 +1674,7 @@
       "curveDir": "right"
     },
     {
-      "id": "id_255",
+      "id": "id_1661",
       "startPos": 1297,
       "endPos": 1295.9,
       "type": "curve",
@@ -1694,7 +1682,7 @@
       "curveDir": "left"
     },
     {
-      "id": "id_254",
+      "id": "id_1660",
       "startPos": 1314.1,
       "endPos": 1312,
       "type": "curve",
@@ -1702,7 +1690,7 @@
       "curveDir": "right"
     },
     {
-      "id": "id_253",
+      "id": "id_1659",
       "startPos": 1325,
       "endPos": 1322,
       "type": "curve",
@@ -1710,7 +1698,7 @@
       "curveDir": "left"
     },
     {
-      "id": "id_252",
+      "id": "id_1658",
       "startPos": 1333,
       "endPos": 1330,
       "type": "curve",
@@ -1718,7 +1706,7 @@
       "curveDir": "right"
     },
     {
-      "id": "id_251",
+      "id": "id_1657",
       "startPos": 1345,
       "endPos": 1342.2,
       "type": "curve",
@@ -1726,7 +1714,7 @@
       "curveDir": "left"
     },
     {
-      "id": "id_250",
+      "id": "id_1656",
       "startPos": 1355,
       "endPos": 1352,
       "type": "curve",
@@ -1736,70 +1724,70 @@
   ],
   "recommendations": [
     {
-      "id": "id_272",
+      "id": "id_1678",
       "startPos": 1321.9,
       "endPos": 1321.2,
       "category": "warning",
       "text": "Переезд. Опасное место. Отпустить тормоза до или тащить пока скорость позволяет. <350 осей 1 мин, >350 осей 2,5 мин ждать после торможения."
     },
     {
-      "id": "id_273",
+      "id": "id_1679",
       "startPos": 1314.1,
       "endPos": 1312,
       "category": "warning",
       "text": "Обрывное место. Движение с осторожностью."
     },
     {
-      "id": "id_274",
+      "id": "id_1680",
       "startPos": 1310.6,
       "endPos": 1308.5,
       "category": "info",
       "text": "Рекуперация. Обратный светофор, после него разбираем рекуперацию."
     },
     {
-      "id": "id_275",
+      "id": "id_1681",
       "startPos": 1304.6,
       "endPos": 1296.8,
       "category": "info",
       "text": "Разобрать рекуперацию. Набрать СП 21‰."
     },
     {
-      "id": "id_276",
+      "id": "id_1682",
       "startPos": 1278.2,
       "endPos": 1275,
       "category": "info",
       "text": "Вход в Бугуруслан. Рекуперация до обрыва опасного места."
     },
     {
-      "id": "id_277",
+      "id": "id_1683",
       "startPos": 1271.4,
       "endPos": 1270.5,
       "category": "note",
       "text": "Мост. 0‰ 16%"
     },
     {
-      "id": "id_278",
+      "id": "id_1684",
       "startPos": 1249.1,
       "endPos": 1247.6,
       "category": "info",
       "text": "Рекуперация. Собрать после 13‰."
     },
     {
-      "id": "id_279",
+      "id": "id_1685",
       "startPos": 1245.4,
       "endPos": 1243.2,
       "category": "info",
       "text": "Разобрать рекуперацию. Медленно на СП у платформы."
     },
     {
-      "id": "id_280",
+      "id": "id_1686",
       "startPos": 1234,
       "endPos": 1230.1,
       "category": "info",
       "text": "Подбельская. Рекуперация. Если нужно, разобрать до кривой или до 23."
     },
     {
-      "id": "id_281",
+      "id": "id_1687",
       "startPos": 1230.1,
       "endPos": 1228,
       "category": "restriction",
@@ -1808,42 +1796,42 @@
       "speedColor": "red"
     },
     {
-      "id": "id_282",
+      "id": "id_1688",
       "startPos": 1221.9,
       "endPos": 1220.5,
       "category": "warning",
       "text": "СП 17‰. Крутой спуск."
     },
     {
-      "id": "id_283",
+      "id": "id_1689",
       "startPos": 1218.4,
       "endPos": 1216,
       "category": "note",
       "text": "После токораздела. П или +%"
     },
     {
-      "id": "id_284",
+      "id": "id_1690",
       "startPos": 1206.8,
       "endPos": 1206.5,
       "category": "warning",
       "text": "Перед нижним мостом СП. Перед прежним мостом П 50. Верхний мост СП 15."
     },
     {
-      "id": "id_285",
+      "id": "id_1691",
       "startPos": 1203.5,
       "endPos": 1201.5,
       "category": "note",
       "text": "Кривая. 0‰."
     },
     {
-      "id": "id_286",
+      "id": "id_1692",
       "startPos": 1196.7,
       "endPos": 1196,
       "category": "warning",
       "text": "Мост. Заправка. 0‰."
     },
     {
-      "id": "id_287",
+      "id": "id_1693",
       "startPos": 1144,
       "endPos": 1140,
       "category": "info",
@@ -1852,417 +1840,424 @@
   ],
   "speedLimits": [
     {
-      "id": "id_346",
+      "id": "id_1752",
       "startPos": 1144,
       "endPos": 1140,
       "speed": 55,
       "remark": "Кинель — рекуперация 55"
     },
     {
-      "id": "id_345",
+      "id": "id_1751",
       "startPos": 1148.7,
       "endPos": 1144,
       "speed": 70,
       "remark": "7‰ 0 скорость 70"
     },
     {
-      "id": "id_344",
+      "id": "id_1750",
       "startPos": 1149.5,
       "endPos": 1148.7,
       "speed": 70,
       "remark": "-%"
     },
     {
-      "id": "id_343",
+      "id": "id_1749",
       "startPos": 1152.2,
       "endPos": 1149.5,
       "speed": 30,
       "remark": "Тургеньевка СП 30"
     },
     {
-      "id": "id_342",
+      "id": "id_1748",
       "startPos": 1156.9,
       "endPos": 1152.2,
       "speed": 60,
       "remark": "0"
     },
     {
-      "id": "id_341",
+      "id": "id_1747",
       "startPos": 1162,
       "endPos": 1156.9,
       "speed": 70,
       "remark": "После Георгиевки"
     },
     {
-      "id": "id_340",
+      "id": "id_1746",
       "startPos": 1164.1,
       "endPos": 1162,
       "speed": 30,
       "remark": "Георгиевка СП 10"
     },
     {
-      "id": "id_339",
+      "id": "id_1745",
       "startPos": 1170.1,
       "endPos": 1164.1,
       "speed": 70,
       "remark": "0 на 70"
     },
     {
-      "id": "id_338",
+      "id": "id_1744",
       "startPos": 1173.3,
       "endPos": 1170.1,
       "speed": 70,
       "remark": "-%"
     },
     {
-      "id": "id_337",
+      "id": "id_1743",
       "startPos": 1175,
       "endPos": 1173.3,
       "speed": 60,
       "remark": "После Кротовки"
     },
     {
-      "id": "id_336",
+      "id": "id_1742",
       "startPos": 1177.3,
       "endPos": 1175,
       "speed": 30,
       "remark": "Кротовка СП 30"
     },
     {
-      "id": "id_335",
+      "id": "id_1741",
       "startPos": 1182.2,
       "endPos": 1177.3,
       "speed": 50,
       "remark": "3‰ 0"
     },
     {
-      "id": "id_334",
+      "id": "id_1740",
       "startPos": 1184,
       "endPos": 1182.2,
       "speed": 70,
       "remark": "Сам вытолкнет в гору"
     },
     {
-      "id": "id_333",
+      "id": "id_1739",
       "startPos": 1189.1,
       "endPos": 1184,
       "speed": 60,
       "remark": "11‰"
     },
     {
-      "id": "id_332",
+      "id": "id_1738",
       "startPos": 1190,
       "endPos": 1189.1,
       "speed": 73,
       "remark": "Разгон 73"
     },
     {
-      "id": "id_331",
+      "id": "id_1737",
       "startPos": 1192.4,
       "endPos": 1190,
       "speed": 50,
       "remark": "Новоотрадная СП"
     },
     {
-      "id": "id_330",
+      "id": "id_1736",
       "startPos": 1196.7,
       "endPos": 1192.4,
       "speed": 60,
       "remark": "После моста"
     },
     {
-      "id": "id_329",
+      "id": "id_1735",
       "startPos": 1198,
       "endPos": 1196.7,
       "speed": 40,
       "remark": "Мост — заправка"
     },
     {
-      "id": "id_328",
+      "id": "id_1734",
       "startPos": 1200.6,
       "endPos": 1198,
       "speed": 50,
       "remark": "Переезд П"
     },
     {
-      "id": "id_327",
+      "id": "id_1733",
       "startPos": 1203.5,
       "endPos": 1200.6,
       "speed": 60,
       "remark": "Кривая 0‰"
     },
     {
-      "id": "id_326",
+      "id": "id_1732",
       "startPos": 1204.7,
       "endPos": 1203.5,
       "speed": 40,
       "remark": "Верхний мост СП 15"
     },
     {
-      "id": "id_325",
+      "id": "id_1731",
       "startPos": 1206.5,
       "endPos": 1204.7,
       "speed": 50,
       "remark": "После прежнего моста"
     },
     {
-      "id": "id_324",
+      "id": "id_1730",
       "startPos": 1206.8,
       "endPos": 1206.5,
       "speed": 50,
       "remark": "Перед мостом"
     },
     {
-      "id": "id_323",
+      "id": "id_1729",
       "startPos": 1209.4,
       "endPos": 1206.8,
       "speed": 40,
       "remark": "Толкай — вход"
     },
     {
-      "id": "id_322",
+      "id": "id_1728",
       "startPos": 1212.2,
       "endPos": 1209.4,
       "speed": 50,
       "remark": "Кривая"
     },
     {
-      "id": "id_321",
+      "id": "id_1727",
       "startPos": 1218.4,
       "endPos": 1212.2,
       "speed": 60,
       "remark": "После токораздела П"
     },
     {
-      "id": "id_320",
+      "id": "id_1726",
       "startPos": 1221.9,
       "endPos": 1218.4,
       "speed": 45,
       "remark": "СП 17‰"
     },
     {
-      "id": "id_319",
+      "id": "id_1725",
       "startPos": 1228,
       "endPos": 1221.9,
       "speed": 70,
       "remark": "Разгон после Подбельской"
     },
     {
-      "id": "id_318",
+      "id": "id_1724",
       "startPos": 1234,
       "endPos": 1228,
       "speed": 50,
       "remark": "Подбельская — рекуперация"
     },
     {
-      "id": "id_317",
+      "id": "id_1723",
       "startPos": 1236.5,
       "endPos": 1234,
       "speed": 60,
       "remark": "Подбельская подход"
     },
     {
-      "id": "id_316",
+      "id": "id_1722",
       "startPos": 1239.2,
       "endPos": 1236.5,
       "speed": 50,
       "remark": "После переезда СП"
     },
     {
-      "id": "id_315",
+      "id": "id_1721",
       "startPos": 1243.2,
       "endPos": 1239.2,
       "speed": 60,
       "remark": "После платформы"
     },
     {
-      "id": "id_314",
+      "id": "id_1720",
       "startPos": 1245.4,
       "endPos": 1243.2,
       "speed": 40,
       "remark": "У платформы медленно"
     },
     {
-      "id": "id_313",
+      "id": "id_1719",
       "startPos": 1247.6,
       "endPos": 1245.4,
       "speed": 60,
       "remark": "Рекуперация"
     },
     {
-      "id": "id_312",
+      "id": "id_1718",
       "startPos": 1249.1,
       "endPos": 1247.6,
       "speed": 60,
       "remark": "13‰ рекуперация"
     },
     {
-      "id": "id_311",
+      "id": "id_1717",
       "startPos": 1251.6,
       "endPos": 1249.1,
       "speed": 50,
       "remark": "15‰ СП"
     },
     {
-      "id": "id_310",
+      "id": "id_1716",
       "startPos": 1254.1,
       "endPos": 1251.6,
       "speed": 60,
       "remark": "Перед мостом П"
     },
     {
-      "id": "id_309",
+      "id": "id_1715",
       "startPos": 1256.9,
       "endPos": 1254.1,
       "speed": 50,
       "remark": "СП"
     },
     {
-      "id": "id_308",
+      "id": "id_1714",
       "startPos": 1267.2,
       "endPos": 1256.9,
       "speed": 70,
       "remark": "Участок до СП"
     },
     {
-      "id": "id_307",
+      "id": "id_1713",
       "startPos": 1269.9,
       "endPos": 1267.2,
       "speed": 66,
       "remark": "Кривая 0‰ скорость 66"
     },
     {
-      "id": "id_306",
+      "id": "id_1712",
       "startPos": 1271.4,
       "endPos": 1269.9,
       "speed": 60,
       "remark": "После моста, СП 13‰"
     },
     {
-      "id": "id_305",
+      "id": "id_1711",
       "startPos": 1275,
       "endPos": 1271.4,
       "speed": 50,
       "remark": "Мост 0‰ 16%"
     },
     {
-      "id": "id_304",
+      "id": "id_1710",
       "startPos": 1277.1,
       "endPos": 1275,
       "speed": 60,
       "remark": "Вокзал Бугуруслан — выехали 60 на П"
     },
     {
-      "id": "id_303",
+      "id": "id_1709",
       "startPos": 1278.2,
       "endPos": 1277.1,
       "speed": 40,
       "remark": "Вход в Бугуруслан"
     },
     {
-      "id": "id_302",
+      "id": "id_1708",
       "startPos": 1289.4,
       "endPos": 1278.2,
       "speed": 70,
       "remark": "Бугурусланский участок"
     },
     {
-      "id": "id_301",
+      "id": "id_1707",
       "startPos": 1293.8,
       "endPos": 1289.4,
       "speed": 66,
       "remark": "Кривая — 0‰ скорость 66"
     },
     {
-      "id": "id_300",
+      "id": "id_1706",
       "startPos": 1296.8,
       "endPos": 1293.8,
       "speed": 50,
       "remark": "СП 21‰"
     },
     {
-      "id": "id_299",
+      "id": "id_1705",
       "startPos": 1304.6,
       "endPos": 1296.8,
       "speed": 70,
       "remark": "Разгон после рекуперации"
     },
     {
-      "id": "id_298",
+      "id": "id_1704",
       "startPos": 1310.6,
       "endPos": 1304.6,
       "speed": 60,
       "remark": "После обратного светофора"
     },
     {
-      "id": "id_297",
+      "id": "id_1703",
       "startPos": 1314.1,
       "endPos": 1310.6,
       "speed": 30,
       "remark": "Обрывное место"
     },
     {
-      "id": "id_296",
+      "id": "id_1702",
       "startPos": 1321.9,
       "endPos": 1314.1,
       "speed": 40,
       "remark": "Переезд — опасное место"
     },
     {
-      "id": "id_295",
+      "id": "id_1701",
       "startPos": 1327.1,
       "endPos": 1321.9,
       "speed": 50,
       "remark": "СП 17‰"
     },
     {
-      "id": "id_294",
+      "id": "id_1700",
       "startPos": 1330.2,
       "endPos": 1327.1,
       "speed": 60,
       "remark": "После Филипповки"
     },
     {
-      "id": "id_293",
+      "id": "id_1699",
       "startPos": 1331.2,
       "endPos": 1330.2,
       "speed": 30,
       "remark": "Филипповка — входной Н, выходной Н1 жёлтый"
     },
     {
-      "id": "id_292",
+      "id": "id_1698",
       "startPos": 1340,
       "endPos": 1331.2,
       "speed": 60,
       "remark": "После оттяжки"
     },
     {
-      "id": "id_291",
+      "id": "id_1697",
       "startPos": 1342.2,
       "endPos": 1340,
       "speed": 40,
       "remark": "Оттяжка назад"
     },
     {
-      "id": "id_290",
+      "id": "id_1696",
       "startPos": 1346,
       "endPos": 1342.2,
       "speed": 50,
       "remark": "Начало торможения 50"
     },
     {
-      "id": "id_289",
+      "id": "id_1695",
       "startPos": 1350,
       "endPos": 1346,
       "speed": 41,
       "remark": "Сарай-Гир — кривая, скорость 41/43"
     },
     {
-      "id": "id_288",
+      "id": "id_1694",
       "startPos": 1365.8,
       "endPos": 1350,
       "speed": 60,
       "remark": "Участок Абдулино-Сарай-Гир"
+    }
+  ],
+  "crossings": [
+    {
+      "id": "id_1756",
+      "position": 1370.5,
+      "label": "Переезд"
     }
   ]
 }

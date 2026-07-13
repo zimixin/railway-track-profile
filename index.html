@@ -279,23 +279,29 @@
 
             <!-- ELEVATIONS -->
             <div class="editor-section" id="sec-elevations">
-                <div class="section-title">Добавить точку рельефа</div>
-                <div class="form-row">
-                    <div class="form-group">
+                <div class="section-title">Быстрое добавление (Tab → Enter)</div>
+                <div class="form-row form-row-small" id="elevQuickRow">
+                    <div class="form-group" style="flex:0 0 75px;">
                         <label>КМ</label>
-                        <input type="number" id="el-km" value="0" min="0">
+                        <input type="number" id="el-km" value="0" min="0" tabindex="1">
                     </div>
-                    <div class="form-group">
-                        <label>Метры (0-999)</label>
-                        <input type="number" id="el-m" value="0" min="0" max="999">
+                    <div class="form-group" style="flex:0 0 60px;">
+                        <label>ПК</label>
+                        <input type="number" id="el-pk" value="0" min="0" max="9" tabindex="2">
                     </div>
-                    <div class="form-group">
-                        <label>Высота (м)</label>
-                        <input type="number" id="el-y" step="0.1" value="5">
+                    <div class="form-group" style="flex:0 0 75px;">
+                        <label>Метры</label>
+                        <input type="number" id="el-m" value="0" min="0" max="99" tabindex="3">
+                    </div>
+                    <div class="form-group" style="flex:0 0 100px;">
+                        <label>Высота (±prev)</label>
+                        <input type="number" id="el-y" step="0.1" value="" tabindex="4" placeholder="авто">
+                    </div>
+                    <div style="display:flex;align-items:flex-end;gap:4px;padding-bottom:2px;">
+                        <button class="btn btn-primary" id="addElevBtn" style="min-width:40px;height:32px;font-size:18px;justify-content:center;padding:0;">↵</button>
                     </div>
                 </div>
-                <button class="btn btn-primary" style="width:100%;justify-content:center;" id="addElevBtn">+ Добавить точку</button>
-                <div class="hint-box">💡 В режиме редактирования точки можно перетаскивать мышью прямо на профиле</div>
+                <div class="hint-box">💡 Tab: КМ → ПК → метры → высота. Enter — добавить точку. Высота авторасчёт от предыдущей</div>
                 <div class="section-title" style="margin-top:4px;">Список точек</div>
                 <div class="item-list" id="elevationsList"></div>
                 <div class="selected-editor" id="sel-elevations">
@@ -587,24 +593,10 @@
                             <div class="form-row">
                                 <div class="form-group">
                                     <label>Категория</label>
-                                    <select id="rc-category" onchange="toggleRestrictionFields()">
+                                    <select id="rc-category">
                                         <option value="note">📝 Заметка</option>
                                         <option value="warning">⚠ Предупреждение</option>
-                                        <option value="restriction">🚧 Ограничение</option>
                                         <option value="info">ℹ Информация</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div id="rc-restriction-fields" class="form-row" style="display:none;">
-                                <div class="form-group">
-                                    <label>Скорость (км/ч)</label>
-                                    <input type="number" id="rc-speed" value="60" min="5" max="200">
-                                </div>
-                                <div class="form-group">
-                                    <label>Цвет</label>
-                                    <select id="rc-speed-color">
-                                        <option value="red">🔴 Красный</option>
-                                        <option value="blue">🔵 Синий</option>
                                     </select>
                                 </div>
                             </div>
@@ -646,21 +638,7 @@
                                             <select id="sel-rc-category">
                                                 <option value="note">📝 Заметка</option>
                                                 <option value="warning">⚠ Предупреждение</option>
-                                                <option value="restriction">🚧 Ограничение</option>
                                                 <option value="info">ℹ Информация</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div id="sel-rc-restriction-fields" class="form-row" style="display:none;">
-                                        <div class="form-group">
-                                            <label>Скорость (км/ч)</label>
-                                            <input type="number" id="sel-rc-speed" min="5" max="200">
-                                        </div>
-                                        <div class="form-group">
-                                            <label>Цвет</label>
-                                            <select id="sel-rc-speed-color">
-                                                <option value="red">🔴 Красный</option>
-                                                <option value="blue">🔵 Синий</option>
                                             </select>
                                         </div>
                                     </div>
@@ -763,6 +741,7 @@
         <div class="status-dot" id="statusDot"></div>
         <span id="statusText">Режим просмотра</span>
     </div>
+    <div class="status-item" id="dataSource" style="font-size:9px;color:#8b949e;">⚡ Новый</div>
     <div class="status-item">Масштаб: <b id="zoomLabel">1 ПК = 12px</b></div>
     <div class="status-item">Участок: <b id="rangeLabel">0 — 0 км</b></div>
     <div class="status-item" style="margin-left:auto;">Точек: <b id="statPts">0</b></div>
