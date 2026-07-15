@@ -2866,17 +2866,46 @@ function updateStats() {
 }
 
 // ============================================================
-// INIT
+// INIT — auto-load track_profile_odd.json
 // ============================================================
-if (!loadFromLocalStorage()) {
-    loadDemo();
-}
-saveSnapshot();
-document.getElementById('statusText').innerHTML = state.data.stations.length
-    ? '✅ Восстановлено из сохранения'
-    : '⚡ Новый профиль';
-['stations', 'signals', 'elevations', 'slopes', 'curves', 'crossings', 'recommendations', 'speedLimits'].forEach(refreshEditorList);
-draw();
+fetch('track_profile_odd.json')
+    .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    .then(parsed => {
+        const required = ['stations', 'signals', 'elevations', 'slopes', 'curves', 'recommendations', 'speedLimits', 'crossings'];
+        for (const key of required) {
+            if (!Array.isArray(parsed[key])) parsed[key] = [];
+        }
+        state.data = {
+            stations: parsed.stations,
+            signals: parsed.signals,
+            elevations: parsed.elevations,
+            slopes: parsed.slopes,
+            curves: parsed.curves,
+            recommendations: parsed.recommendations,
+            speedLimits: parsed.speedLimits || [],
+            crossings: parsed.crossings || []
+        };
+        state.importedFromFile = true;
+        saveSnapshot();
+        saveToLocalStorage();
+        ['stations', 'signals', 'elevations', 'slopes', 'curves', 'crossings', 'recommendations', 'speedLimits'].forEach(refreshEditorList);
+        draw();
+        document.getElementById('statusText').innerHTML = '✅ Загружен track_profile_odd.json';
+        setTimeout(() => updateStats(), 100);
+    })
+    .catch(err => {
+        console.warn('Failed to load track_profile_odd.json, falling back to localStorage:', err);
+        // Fallback to localStorage
+        if (!loadFromLocalStorage()) {
+            loadDemo();
+        }
+        saveSnapshot();
+        document.getElementById('statusText').innerHTML = state.data.stations.length
+            ? '✅ Восстановлено из сохранения'
+            : '⚡ Новый профиль';
+        ['stations', 'signals', 'elevations', 'slopes', 'curves', 'crossings', 'recommendations', 'speedLimits'].forEach(refreshEditorList);
+        draw();
+    });
 
 // Register service worker for PWA offline support
 if ('serviceWorker' in navigator) {
