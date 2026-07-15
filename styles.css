@@ -669,3 +669,47 @@ canvas.edit-mode { cursor: crosshair; }
     .statusbar { font-size: 8px; }
     .status-item { gap: 2px; }
 }
+
+/* ===== CONTEXT MENU ===== */
+.ctx-menu {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    background: var(--panel-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 4px;
+    min-width: 200px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    backdrop-filter: blur(12px);
+}
+.ctx-menu.show {
+    display: block;
+}
+.ctx-item {
+    padding: 8px 14px;
+    font-size: 12px;
+    cursor: pointer;
+    border-radius: 4px;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    user-select: none;
+}
+.ctx-item:hover {
+    background: rgba(88,166,255,0.12);
+    color: #58a6ff;
+}
+.ctx-item.ctx-danger {
+    color: #f85149;
+}
+.ctx-item.ctx-danger:hover {
+    background: rgba(248,81,73,0.12);
+    color: #ff6b6b;
+}
+.ctx-sep {
+    height: 1px;
+    background: var(--border);
+    margin: 4px 8px;
+}

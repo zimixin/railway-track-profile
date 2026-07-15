@@ -194,27 +194,39 @@ const ctx = canvas.getContext('2d');
 const canvasWrap = document.getElementById('canvasWrap');
 
 const MARGIN = { top: 80, right: 60, bottom: 60, left: 70 };
-const PROFILE_HEIGHT = 180;
-const KM_AXIS_HEIGHT = 50;   // horizontal axis with km/pk — placed BELOW profile
-const PLAN_HEIGHT = 40;
-const SLOPE_HEIGHT = 100;
-const SPEED_HEIGHT = 80;
-const SECTION_GAP = 20;
+const MIN_SECTION_HEIGHT = 30; // minimum usable height for any section
+
+// Dynamic section heights — fit to viewport
+function getSectionHeights(h) {
+    const avail = h - MARGIN.top - MARGIN.bottom - 4 - 2 * 20; // 4=gap speed→profile, 2*20=SECTION_GAPs
+    // distribute: speed 20%, profile 40%, axis 12%, plan 10%, slope 18%
+    const speed = Math.max(60, Math.round(avail * 0.2));
+    const profile = Math.max(100, Math.round(avail * 0.40));
+    const axis = Math.max(40, Math.round(avail * 0.12));
+    const plan = Math.max(30, Math.round(avail * 0.10));
+    const slope = Math.max(60, avail - speed - profile - axis - plan);
+    return { speed, profile, axis, plan, slope };
+}
 
 // Y positions of each section
 function sectionY() {
+    const sh = getSectionHeights(canvasWrap.clientHeight || 700);
     const speedTop = MARGIN.top;
-    const speedBottom = speedTop + SPEED_HEIGHT;
+    const speedBottom = speedTop + sh.speed;
     const profileTop = speedBottom + 4;
-    const profileBottom = profileTop + PROFILE_HEIGHT;
+    const profileBottom = profileTop + sh.profile;
     const axisTop = profileBottom;
-    const axisBottom = axisTop + KM_AXIS_HEIGHT;
-    const planTop = axisBottom + SECTION_GAP;
-    const planBottom = planTop + PLAN_HEIGHT;
-    const slopeTop = planBottom + SECTION_GAP;
-    const slopeBottom = slopeTop + SLOPE_HEIGHT;
-    return { profileTop, profileBottom, axisTop, axisBottom, planTop, planBottom, slopeTop, slopeBottom, speedTop, speedBottom };
+    const axisBottom = axisTop + sh.axis;
+    const planTop = axisBottom + 20;
+    const planBottom = planTop + sh.plan;
+    const slopeTop = planBottom + 20;
+    const slopeBottom = slopeTop + sh.slope;
+    return { profileTop, profileBottom, axisTop, axisBottom, planTop, planBottom, slopeTop, slopeBottom, speedTop, speedBottom, sectionHeights: sh };
 }
+
+// ResizeObserver — перерисовка при изменении размера контейнера
+const resizeObserver = new ResizeObserver(() => { draw(); });
+resizeObserver.observe(canvasWrap);
 
 // ============================================================
 // COORDINATE TRANSFORMS
@@ -336,7 +348,7 @@ function drawProfile(sy) {
     elevations.forEach((pt, i) => {
         const x = positionToX(pt.position);
         const normalizedY = (pt.y - minY) / rangeY;
-        const y = sy.profileBottom - padding - normalizedY * (PROFILE_HEIGHT - 2 * padding);
+        const y = sy.profileBottom - padding - normalizedY * (sy.sectionHeights.profile - 2 * padding);
         if (i === 0) ctx.moveTo(x, y);
         else ctx.lineTo(x, y);
     });
@@ -357,7 +369,7 @@ function drawProfile(sy) {
         elevations.forEach((pt, i) => {
             const x = positionToX(pt.position);
             const normalizedY = (pt.y - minY) / rangeY;
-            const y = sy.profileBottom - padding - normalizedY * (PROFILE_HEIGHT - 2 * padding);
+            const y = sy.profileBottom - padding - normalizedY * (sy.sectionHeights.profile - 2 * padding);
             if (i === 0) ctx.moveTo(x, y);
             else ctx.lineTo(x, y);
         });
@@ -367,7 +379,7 @@ function drawProfile(sy) {
         elevations.forEach(pt => {
             const x = positionToX(pt.position);
             const normalizedY = (pt.y - minY) / rangeY;
-            const y = sy.profileBottom - padding - normalizedY * (PROFILE_HEIGHT - 2 * padding);
+            const y = sy.profileBottom - padding - normalizedY * (sy.sectionHeights.profile - 2 * padding);
             const isSelected = state.selectedId === pt.id;
             const radius = state.editMode ? 4 : 1.5;
             ctx.fillStyle = isSelected ? '#58a6ff' : (state.editMode ? '#ffa726' : '#ef5350');
@@ -478,13 +490,13 @@ function drawSlopes(sy) {
         // Background fill
         ctx.fillStyle = seg.direction === 'up' ? 'rgba(255,167,38,0.12)' :
                         (seg.direction === 'down' ? 'rgba(66,165,245,0.12)' : 'rgba(139,148,158,0.08)');
-        ctx.fillRect(seg.x1, sy.slopeTop + 5, seg.x2 - seg.x1, SLOPE_HEIGHT - 15);
+        ctx.fillRect(seg.x1, sy.slopeTop + 5, seg.x2 - seg.x1, sy.sectionHeights.slope - 15);
 
         // Border
         ctx.strokeStyle = seg.direction === 'up' ? '#ffa726' :
                           (seg.direction === 'down' ? '#42a5f5' : '#8b949e');
         ctx.lineWidth = 1;
-        ctx.strokeRect(seg.x1, sy.slopeTop + 5, seg.x2 - seg.x1, SLOPE_HEIGHT - 15);
+        ctx.strokeRect(seg.x1, sy.slopeTop + 5, seg.x2 - seg.x1, sy.sectionHeights.slope - 15);
 
         // Separator line at each elevation point
         ctx.strokeStyle = 'rgba(139,148,158,0.3)';
@@ -536,7 +548,7 @@ function drawSlopes(sy) {
 }
 
 function drawPlanPath(sy) {
-    const baseY = sy.planTop + PLAN_HEIGHT / 2;
+    const baseY = sy.planTop + sy.sectionHeights.plan / 2;
 
     // Base line
     ctx.strokeStyle = '#30363d';
@@ -602,7 +614,7 @@ function drawStations(sy) {
         const isSelected = state.selectedId === station.id;
 
         ctx.fillStyle = isSelected ? 'rgba(102, 187, 106, 0.15)' : 'rgba(102, 187, 106, 0.06)';
-        ctx.fillRect(xStart, sy.profileTop, xEnd - xStart, PROFILE_HEIGHT);
+        ctx.fillRect(xStart, sy.profileTop, xEnd - xStart, sy.sectionHeights.profile);
 
         ctx.strokeStyle = isSelected ? '#66bb6a' : 'rgba(102, 187, 106, 0.5)';
         ctx.lineWidth = isSelected ? 2 : 1.5;
@@ -655,7 +667,7 @@ function drawSignals(sy) {
 
     signals.forEach(sig => {
         const x = positionToX(sig.position);
-        const y = yBase + PROFILE_HEIGHT - 20;
+        const y = yBase + sy.sectionHeights.profile - 20;
         const isSelected = state.selectedId === sig.id;
 
         let color, shape;
@@ -715,7 +727,7 @@ function drawSignals(sy) {
 function drawCrossings(sy) {
     const crossings = state.data.crossings;
     const yBase = sy.profileTop;
-    const y = yBase + PROFILE_HEIGHT - 20;
+    const y = yBase + sy.sectionHeights.profile - 20;
 
     crossings.forEach(cr => {
         const x = positionToX(cr.position);
@@ -784,7 +796,7 @@ function drawRecommendations(sy) {
 
         // --- Vertical 'I' markers at start and end ---
         const barTop = sy.profileTop + 6;
-        const barBot = sy.profileTop + PROFILE_HEIGHT - 6;
+        const barBot = sy.profileTop + sy.sectionHeights.profile - 6;
         ctx.strokeStyle = color;
         ctx.lineWidth = isSelected ? 3 : 2;
         ctx.globalAlpha = isSelected ? 0.9 : 0.5;
@@ -1151,44 +1163,68 @@ function getMousePos(e) {
     };
 }
 
-// Touch event support — forward to mouse handlers
-let touchStartX = 0, touchStartY = 0, touchMoved = false;
+// ============================================================
+// TOUCH SUPPORT — Android-friendly: pan + tap
+// ============================================================
+let touchStartX = 0, touchStartY = 0, touchMoved = false, touchScrollLeft = 0;
 canvas.addEventListener('touchstart', (e) => {
-    e.preventDefault();
+    if (e.touches.length > 1) return; // ignore multi-touch
     const touch = e.changedTouches[0];
     touchStartX = touch.clientX;
     touchStartY = touch.clientY;
     touchMoved = false;
-    const mouseEvent = new MouseEvent('mousedown', {
-        clientX: touch.clientX, clientY: touch.clientY
-    });
-    canvas.dispatchEvent(mouseEvent);
-}, { passive: false });
+    touchScrollLeft = canvasWrap.scrollLeft;
+    // Don't prevent default — let native scroll work
+}, { passive: true });
 canvas.addEventListener('touchmove', (e) => {
-    e.preventDefault();
-    touchMoved = true;
-    const touch = e.changedTouches[0];
-    const mouseEvent = new MouseEvent('mousemove', {
-        clientX: touch.clientX, clientY: touch.clientY
-    });
-    canvas.dispatchEvent(mouseEvent);
-}, { passive: false });
-canvas.addEventListener('touchend', (e) => {
-    e.preventDefault();
-    const mouseEvent = new MouseEvent('mouseup', {});
-    canvas.dispatchEvent(mouseEvent);
-    // Detect tap (no movement) — dispatch click for on-canvas selection
-    if (!touchMoved) {
-        const touch = e.changedTouches[0];
-        canvas.dispatchEvent(new MouseEvent('click', {
-            clientX: touch.clientX, clientY: touch.clientY
-        }));
+    if (e.touches.length > 1) return;
+    const touch = e.touches[0];
+    const dx = touch.clientX - touchStartX;
+    const dy = touch.clientY - touchStartY;
+    if (Math.abs(dx) > 5 || Math.abs(dy) > 5) touchMoved = true;
+    // Pan the canvas-wrap horizontally
+    canvasWrap.scrollLeft = touchScrollLeft - dx;
+    // Prevent vertical page scroll during horizontal pan
+    if (Math.abs(dx) > Math.abs(dy)) {
+        e.preventDefault();
     }
 }, { passive: false });
-canvas.addEventListener('touchcancel', (e) => {
-    const mouseEvent = new MouseEvent('mouseup', {});
-    canvas.dispatchEvent(mouseEvent);
-}, { passive: false });
+canvas.addEventListener('touchend', (e) => {
+    if (!touchMoved) {
+        // Tap — forward to click handler
+        const touch = e.changedTouches[0];
+        const mouseEvent = new MouseEvent('click', {
+            clientX: touch.clientX, clientY: touch.clientY
+        });
+        canvas.dispatchEvent(mouseEvent);
+    }
+    // Long-press context menu
+}, { passive: true });
+// Long-press for context menu on mobile
+let longPressTimer = null;
+canvas.addEventListener('touchstart', (e) => {
+    if (e.touches.length > 1) return;
+    longPressTimer = setTimeout(() => {
+        if (!touchMoved) {
+            const touch = e.changedTouches[0];
+            const ctxEvent = new MouseEvent('contextmenu', {
+                clientX: touch.clientX, clientY: touch.clientY,
+                button: 2
+            });
+            canvas.dispatchEvent(ctxEvent);
+            navigator.vibrate && navigator.vibrate(20);
+        }
+    }, 500);
+}, { passive: true });
+canvas.addEventListener('touchmove', () => {
+    if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
+}, { passive: true });
+canvas.addEventListener('touchend', () => {
+    if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
+}, { passive: true });
+canvas.addEventListener('touchcancel', () => {
+    if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
+}, { passive: true });
 
 function findElevationAt(mx, my) {
     if (!state.editMode) return null;
@@ -1203,7 +1239,7 @@ function findElevationAt(mx, my) {
     for (const pt of elevations) {
         const x = positionToX(pt.position);
         const normalizedY = (pt.y - minY) / rangeY;
-        const y = sy.profileBottom - padding - normalizedY * (PROFILE_HEIGHT - 2 * padding);
+        const y = sy.profileBottom - padding - normalizedY * (sy.sectionHeights.profile - 2 * padding);
         if (Math.hypot(mx - x, my - y) < 8) return pt;
     }
     return null;
@@ -1214,7 +1250,7 @@ function findSignalAt(mx, my) {
     const sy = sectionY();
     for (const sig of signals) {
         const x = positionToX(sig.position);
-        const y = sy.profileTop + PROFILE_HEIGHT - 20;
+        const y = sy.profileTop + sy.sectionHeights.profile - 20;
         if (Math.hypot(mx - x, my - y) < 12) return sig;
     }
     return null;
@@ -1262,7 +1298,7 @@ function findSpeedLimitAt(mx, my) {
 function findCrossingAt(mx, my) {
     if (!state.editMode) return null;
     const sy = sectionY();
-    const y = sy.profileTop + PROFILE_HEIGHT - 20;
+    const y = sy.profileTop + sy.sectionHeights.profile - 20;
     for (const cr of state.data.crossings) {
         const x = positionToX(cr.position);
         if (Math.hypot(mx - x, my - y) < 10) return cr;
@@ -1290,7 +1326,7 @@ function findStationBoundaryAt(mx, my) {
 function findCurveBoundaryAt(mx, my) {
     if (!state.editMode) return null;
     const sy = sectionY();
-    const baseY = sy.planTop + PLAN_HEIGHT / 2;
+    const baseY = sy.planTop + sy.sectionHeights.plan / 2;
     for (const cv of state.data.curves) {
         const x1 = positionToX(cv.startPos);
         const x2 = positionToX(cv.endPos);
@@ -1396,7 +1432,7 @@ canvas.addEventListener('mousemove', (e) => {
             const axisMin = state.dragAxisMin;
             const axisMax = state.dragAxisMax;
             const rangeY = (axisMax - axisMin) || 1;
-            const normalizedY = Math.min(1, Math.max(0, 1 - (y - (sy.profileTop + padding)) / (PROFILE_HEIGHT - 2 * padding)));
+            const normalizedY = Math.min(1, Math.max(0, 1 - (y - (sy.profileTop + padding)) / (sy.sectionHeights.profile - 2 * padding)));
             state.dragging.item.y = Math.round((axisMin + normalizedY * rangeY) * 10) / 10;
         } else {
             state.dragging.item[state.dragging.field] = rounded;
@@ -1539,7 +1575,7 @@ canvas.addEventListener('click', (e) => {
                 const maxY = elevationYs.length ? Math.max(...elevationYs) + 1 : 10;
                 const rangeY = (maxY - minY) || 1;
                 const padding = 20;
-                const normalizedY = Math.min(1, Math.max(0, 1 - (y - (sy.profileTop + padding)) / (PROFILE_HEIGHT - 2 * padding)));
+                const normalizedY = Math.min(1, Math.max(0, 1 - (y - (sy.profileTop + padding)) / (sy.sectionHeights.profile - 2 * padding)));
                 const elevationY = Math.round((minY + normalizedY * rangeY) * 10) / 10;
                 
                 saveSnapshot();
@@ -1558,19 +1594,126 @@ canvas.addEventListener('mouseleave', () => {
     document.getElementById('tooltip').style.display = 'none';
 });
 
-// ПКМ — удалить выделенный элемент
+// ============================================================
+// CONTEXT MENU (ПКМ)
+// ============================================================
+const ctxMenu = document.getElementById('ctxMenu');
+let ctxKm = null; // km position clicked
+
 canvas.addEventListener('contextmenu', (e) => {
     e.preventDefault();
-    if (!state.selectedId || !state.selectedType) return;
-    const type = state.selectedType;
-    const item = findItemById(type, state.selectedId);
-    if (!item) return;
-    saveSnapshot();
-    state.data[type] = state.data[type].filter(x => x.id !== item.id);
-    closeSelectedEditor();
-    refreshEditorList(type);
-    draw();
+    const { x, y } = getMousePos(e);
+    ctxKm = Math.round(xToPosition(x) * 1000) / 1000;
+
+    // Position menu at mouse
+    ctxMenu.style.left = e.clientX + 'px';
+    ctxMenu.style.top = e.clientY + 'px';
+
+    // Show/hide delete item
+    const delItem = ctxMenu.querySelector('[data-action="delete-selected"]');
+    delItem.style.display = (state.selectedId && state.selectedType) ? 'flex' : 'none';
+
+    ctxMenu.classList.add('show');
 });
+
+// Close context menu on any click outside
+document.addEventListener('click', (e) => {
+    if (!ctxMenu.contains(e.target)) {
+        ctxMenu.classList.remove('show');
+    }
+});
+
+// Context menu action handlers
+ctxMenu.querySelectorAll('.ctx-item').forEach(item => {
+    item.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const action = item.dataset.action;
+        ctxMenu.classList.remove('show');
+        handleCtxAction(action);
+    });
+});
+
+function handleCtxAction(action) {
+    if (!ctxKm) ctxKm = state.startKm + (state.endKm - state.startKm) / 2;
+
+    if (action === 'add-station') {
+        // Ensure editor is open with stations tab
+        openEditorTab('stations');
+        const km = Math.floor(ctxKm);
+        const m = Math.round((ctxKm - km) * 1000);
+        document.getElementById('st-km').value = km;
+        document.getElementById('st-m').value = Math.min(m, 999);
+        document.getElementById('st-start-km').value = km;
+        document.getElementById('st-start-m').value = Math.max(0, m - 500);
+        document.getElementById('st-end-km').value = km;
+        document.getElementById('st-end-m').value = Math.min(m + 500, 999);
+        document.getElementById('st-name').focus();
+    } else if (action === 'add-signal') {
+        openEditorTab('signals');
+        const km = Math.floor(ctxKm);
+        const m = Math.round((ctxKm - km) * 1000);
+        document.getElementById('sg-km').value = km;
+        document.getElementById('sg-m').value = Math.min(m, 999);
+        document.getElementById('sg-label').focus();
+    } else if (action === 'add-crossing') {
+        openEditorTab('crossings');
+        const km = Math.floor(ctxKm);
+        const m = Math.round((ctxKm - km) * 1000);
+        document.getElementById('cr-km').value = km;
+        document.getElementById('cr-m').value = Math.min(m, 999);
+        document.getElementById('cr-name').focus();
+    } else if (action === 'add-speed') {
+        openEditorTab('speedLimits');
+        const km = Math.floor(ctxKm);
+        const m = Math.round((ctxKm - km) * 1000);
+        document.getElementById('sp-start-km').value = km;
+        document.getElementById('sp-start-m').value = Math.min(m, 999);
+        document.getElementById('sp-end-km').value = km;
+        document.getElementById('sp-end-m').value = Math.min(m + 500, 999);
+        document.getElementById('sp-speed').focus();
+    } else if (action === 'add-elevation') {
+        openEditorTab('elevations');
+        const km = Math.floor(ctxKm);
+        const pk = Math.floor((ctxKm - km) * 10);
+        const m = Math.round(((ctxKm - km) * 1000) % 100);
+        document.getElementById('el-km').value = km;
+        document.getElementById('el-pk').value = pk;
+        document.getElementById('el-m').value = m;
+        autoCalcElevY();
+        document.getElementById('el-y').focus();
+    } else if (action === 'delete-selected') {
+        if (!state.selectedId || !state.selectedType) return;
+        const type = state.selectedType;
+        const item = findItemById(type, state.selectedId);
+        if (!item) return;
+        saveSnapshot();
+        state.data[type] = state.data[type].filter(x => x.id !== item.id);
+        closeSelectedEditor();
+        refreshEditorList(type);
+        draw();
+    }
+}
+
+function openEditorTab(tabId) {
+    // Open editor panel if not open
+    if (!state.editMode) {
+        state.editMode = true;
+        editBtn.classList.add('active');
+        editorPanel.classList.add('open');
+        canvas.classList.add('edit-mode');
+        document.getElementById('editBanner').classList.add('show');
+        document.getElementById('statusDot').classList.add('edit');
+        document.getElementById('statusText').textContent = 'Режим редактирования';
+    }
+    // Switch to tab
+    const tab = document.querySelector(`.editor-tab[data-tab="${tabId}"]`);
+    if (tab) {
+        document.querySelectorAll('.editor-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.editor-section').forEach(s => s.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById('sec-' + tabId).classList.add('active');
+    }
+}
 
 function showTooltip(e, tooltip) {
     const rect = canvasWrap.getBoundingClientRect();
@@ -2536,6 +2679,11 @@ document.getElementById('amoledBtn').addEventListener('click', () => {
 // UNDO/REDO KEYBOARD
 // ============================================================
 document.addEventListener('keydown', (e) => {
+    // Не перехватывать, если фокус в поле ввода (нативный Ctrl+Z/Y в input)
+    const tag = document.activeElement && document.activeElement.tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') {
+        if ((e.ctrlKey || e.metaKey) && (e.key === 'z' || e.key === 'y' || e.key === 'Z')) return;
+    }
     if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
         e.preventDefault();
         undo();
@@ -2550,6 +2698,7 @@ document.addEventListener('keydown', (e) => {
     }
     // Delete/Backspace — удалить выделенный элемент
     if ((e.key === 'Delete' || e.key === 'Backspace') && !e.ctrlKey && !e.metaKey) {
+        if (tag === 'INPUT' || tag === 'TEXTAREA') return; // native delete in input
         if (state.selectedId && state.selectedType) {
             e.preventDefault();
             const type = state.selectedType;
