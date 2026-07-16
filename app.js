@@ -1858,20 +1858,34 @@ function closeSelectedEditor() {
 }
 
 // Save handlers
-function setupSaveHandler(type, fieldMap) {
+// Один клик по "Сохранить" = один saveSnapshot() = одна запись в undo-истории.
+// postProcess склеивает временные _km/_m/... поля в реальные position/startPos/endPos
+// и удаляет временные поля — выполняется ОДИН раз, в том же обработчике, что и снепшот.
+const SORT_COMPARATORS = {
+    elevations: (a, b) => a.position - b.position,
+    stations: (a, b) => a.position - b.position,
+    slopes: (a, b) => a.startPos - b.startPos,
+    curves: (a, b) => a.startPos - b.startPos,
+    speedLimits: (a, b) => a.startPos - b.startPos,
+    recommendations: (a, b) => a.startPos - b.startPos
+};
+
+function sortType(type) {
+    const cmp = SORT_COMPARATORS[type];
+    if (cmp) state.data[type].sort(cmp);
+}
+
+function setupSaveHandler(type, fieldMap, postProcess) {
     document.querySelector(`[data-save="${type}"]`).addEventListener('click', () => {
-            const item = findItemById(type, state.selectedId);
-            if (!item) return;
-            saveSnapshot();
-            fieldMap.forEach(([inputId, field, parser]) => {
+        const item = findItemById(type, state.selectedId);
+        if (!item) return;
+        saveSnapshot();
+        fieldMap.forEach(([inputId, field, parser]) => {
             const val = document.getElementById(inputId).value;
             item[field] = parser ? parser(val) : val;
         });
-        // Sort
-        if (type === 'elevations') state.data.elevations.sort((a, b) => a.position - b.position);
-        else if (type === 'slopes') state.data.slopes.sort((a, b) => a.startPos - b.startPos);
-        else if (type === 'curves') state.data.curves.sort((a, b) => a.startPos - b.startPos);
-        else if (type === 'stations') state.data.stations.sort((a, b) => a.position - b.position);
+        if (postProcess) postProcess(item);
+        sortType(type);
         refreshEditorList(type);
         draw();
     });
@@ -1879,7 +1893,8 @@ function setupSaveHandler(type, fieldMap) {
     document.querySelector(`[data-close="${type}"]`).addEventListener('click', closeSelectedEditor);
 }
 
-// Auto-apply: on input change, update the item immediately and redraw
+// Auto-apply: on input change, update the item immediately and redraw (без saveSnapshot —
+// история пишется только по явному клику "Сохранить", иначе undo-стек флудился бы на каждую нажатую клавишу)
 function setupAutoApply(type, fieldMap) {
     fieldMap.forEach(([inputId, field, parser]) => {
         const el = document.getElementById(inputId);
@@ -1893,7 +1908,8 @@ function setupAutoApply(type, fieldMap) {
         });
     });
 }
-// Post-process auto-apply for km+m compound fields
+// Live-версия postProcess для km+m compound fields — только пересчёт позиции,
+// временные поля НЕ удаляются (форма ещё открыта, "Сохранить" не нажат)
 function debounceAutoApply(type, fn) {
     const allInputs = document.querySelectorAll(`#sel-${type} input[type="number"]`);
     allInputs.forEach(el => {
@@ -1906,29 +1922,37 @@ function debounceAutoApply(type, fn) {
     });
 }
 
-setupSaveHandler('stations', [
-    ['sel-st-name', 'name'],
-    ['sel-st-km', '_km', parseInt],
-    ['sel-st-m', '_m', parseInt],
-    ['sel-st-start-km', '_skm', parseInt],
-    ['sel-st-start-m', '_sm', parseInt],
-    ['sel-st-end-km', '_ekm', parseInt],
-    ['sel-st-end-m', '_em', parseInt]
-]);
-// Post-process for stations (combine km+m)
-document.querySelector('[data-save="stations"]').addEventListener('click', () => {
-    const item = findItemById('stations', state.selectedId);
-    if (!item) return;
-    saveSnapshot();
+// postProcess-функции: финальная сборка position/startPos/endPos + удаление временных полей
+function ppStations(item) {
     item.position = toPos(item._km, item._m);
     item.start = toPos(item._skm, item._sm);
     item.end = toPos(item._ekm, item._em);
     delete item._km; delete item._m; delete item._skm; delete item._sm; delete item._ekm; delete item._em;
-    state.data.stations.sort((a, b) => a.position - b.position);
-    refreshEditorList('stations');
-    draw();
-});
-setupAutoApply('stations', [
+}
+function ppSinglePos(item) {
+    item.position = toPos(item._km, item._m);
+    delete item._km; delete item._m;
+}
+function ppRange(item) {
+    item.startPos = toPos(item._skm, item._sm);
+    item.endPos = toPos(item._ekm, item._em);
+    delete item._skm; delete item._sm; delete item._ekm; delete item._em;
+}
+// Live-версии (без delete — форма ещё редактируется)
+function liveStations(item) {
+    item.position = toPos(item._km, item._m);
+    item.start = toPos(item._skm, item._sm);
+    item.end = toPos(item._ekm, item._em);
+}
+function liveSinglePos(item) {
+    item.position = toPos(item._km, item._m);
+}
+function liveRange(item) {
+    item.startPos = toPos(item._skm, item._sm);
+    item.endPos = toPos(item._ekm, item._em);
+}
+
+const stationsFields = [
     ['sel-st-name', 'name'],
     ['sel-st-km', '_km', parseInt],
     ['sel-st-m', '_m', parseInt],
@@ -1936,97 +1960,44 @@ setupAutoApply('stations', [
     ['sel-st-start-m', '_sm', parseInt],
     ['sel-st-end-km', '_ekm', parseInt],
     ['sel-st-end-m', '_em', parseInt]
-]);
-debounceAutoApply('stations', (item) => {
-    item.position = toPos(item._km, item._m);
-    item.start = toPos(item._skm, item._sm);
-    item.end = toPos(item._ekm, item._em);
-});
+];
+setupSaveHandler('stations', stationsFields, ppStations);
+setupAutoApply('stations', stationsFields);
+debounceAutoApply('stations', liveStations);
 
-setupSaveHandler('signals', [
-    ['sel-sg-label', 'label'],
-        ['sel-sg-type', 'type'],
-        ['sel-sg-dir', 'dir'],
-        ['sel-sg-km', '_km', parseInt],
-        ['sel-sg-m', '_m', parseInt]
-]);
-document.querySelector('[data-save="signals"]').addEventListener('click', () => {
-    const item = findItemById('signals', state.selectedId);
-    if (!item) return;
-    saveSnapshot();
-    item.position = toPos(item._km, item._m);
-    delete item._km; delete item._m;
-    refreshEditorList('signals');
-    draw();
-});
-setupAutoApply('signals', [
+const signalsFields = [
     ['sel-sg-label', 'label'],
     ['sel-sg-type', 'type'],
     ['sel-sg-dir', 'dir'],
     ['sel-sg-km', '_km', parseInt],
     ['sel-sg-m', '_m', parseInt]
-]);
-debounceAutoApply('signals', (item) => {
-    item.position = toPos(item._km, item._m);
-});
+];
+setupSaveHandler('signals', signalsFields, ppSinglePos);
+setupAutoApply('signals', signalsFields);
+debounceAutoApply('signals', liveSinglePos);
 
-setupSaveHandler('elevations', [
+const elevationsFields = [
     ['sel-el-km', '_km', parseInt],
     ['sel-el-m', '_m', parseInt],
     ['sel-el-y', 'y', parseFloat]
-]);
-document.querySelector('[data-save="elevations"]').addEventListener('click', () => {
-    const item = findItemById('elevations', state.selectedId);
-    if (!item) return;
-    saveSnapshot();
-    item.position = toPos(item._km, item._m);
-    delete item._km; delete item._m;
-    state.data.elevations.sort((a, b) => a.position - b.position);
-    refreshEditorList('elevations');
-    draw();
-});
-setupAutoApply('elevations', [
-    ['sel-el-km', '_km', parseInt],
-    ['sel-el-m', '_m', parseInt],
-    ['sel-el-y', 'y', parseFloat]
-]);
-debounceAutoApply('elevations', (item) => {
-    item.position = toPos(item._km, item._m);
-});
+];
+setupSaveHandler('elevations', elevationsFields, ppSinglePos);
+setupAutoApply('elevations', elevationsFields);
+debounceAutoApply('elevations', liveSinglePos);
 
-setupSaveHandler('slopes', [
+const slopesFields = [
     ['sel-sl-start-km', '_skm', parseInt],
     ['sel-sl-start-m', '_sm', parseInt],
     ['sel-sl-end-km', '_ekm', parseInt],
     ['sel-sl-end-m', '_em', parseInt],
     ['sel-sl-grad', 'gradient', parseInt],
     ['sel-sl-dir', 'direction']
-]);
-document.querySelector('[data-save="slopes"]').addEventListener('click', () => {
-    const item = findItemById('slopes', state.selectedId);
-    if (!item) return;
-    saveSnapshot();
-    item.startPos = toPos(item._skm, item._sm);
-    item.endPos = toPos(item._ekm, item._em);
-    delete item._skm; delete item._sm; delete item._ekm; delete item._em;
-    state.data.slopes.sort((a, b) => a.startPos - b.startPos);
-    refreshEditorList('slopes');
-    draw();
-});
-setupAutoApply('slopes', [
-    ['sel-sl-start-km', '_skm', parseInt],
-    ['sel-sl-start-m', '_sm', parseInt],
-    ['sel-sl-end-km', '_ekm', parseInt],
-    ['sel-sl-end-m', '_em', parseInt],
-    ['sel-sl-grad', 'gradient', parseInt],
-    ['sel-sl-dir', 'direction']
-]);
-debounceAutoApply('slopes', (item) => {
-    item.startPos = toPos(item._skm, item._sm);
-    item.endPos = toPos(item._ekm, item._em);
-});
+];
+setupSaveHandler('slopes', slopesFields, ppRange);
+setupAutoApply('slopes', slopesFields);
+debounceAutoApply('slopes', liveRange);
 
-setupSaveHandler('curves', [
+const curvesFields = [
     ['sel-cv-start-km', '_skm', parseInt],
     ['sel-cv-start-m', '_sm', parseInt],
     ['sel-cv-end-km', '_ekm', parseInt],
@@ -2034,118 +2005,43 @@ setupSaveHandler('curves', [
     ['sel-cv-type', 'type'],
     ['sel-cv-radius', 'radius', parseInt],
     ['sel-cv-dir', 'curveDir']
-]);
-document.querySelector('[data-save="curves"]').addEventListener('click', () => {
-    const item = findItemById('curves', state.selectedId);
-    if (!item) return;
-    saveSnapshot();
-    item.startPos = toPos(item._skm, item._sm);
-    item.endPos = toPos(item._ekm, item._em);
-    delete item._skm; delete item._sm; delete item._ekm; delete item._em;
-    state.data.curves.sort((a, b) => a.startPos - b.startPos);
-    refreshEditorList('curves');
-    draw();
-});
-setupAutoApply('curves', [
-    ['sel-cv-start-km', '_skm', parseInt],
-    ['sel-cv-start-m', '_sm', parseInt],
-    ['sel-cv-end-km', '_ekm', parseInt],
-    ['sel-cv-end-m', '_em', parseInt],
-    ['sel-cv-type', 'type'],
-    ['sel-cv-radius', 'radius', parseInt],
-    ['sel-cv-dir', 'curveDir']
-]);
-debounceAutoApply('curves', (item) => {
-    item.startPos = toPos(item._skm, item._sm);
-    item.endPos = toPos(item._ekm, item._em);
-});
+];
+setupSaveHandler('curves', curvesFields, ppRange);
+setupAutoApply('curves', curvesFields);
+debounceAutoApply('curves', liveRange);
 
-setupSaveHandler('crossings', [
+const crossingsFields = [
     ['sel-cr-name', 'label'],
     ['sel-cr-km', '_km', parseInt],
     ['sel-cr-m', '_m', parseInt]
-]);
-document.querySelector('[data-save="crossings"]').addEventListener('click', () => {
-    const item = findItemById('crossings', state.selectedId);
-    if (!item) return;
-    saveSnapshot();
-    item.position = toPos(item._km, item._m);
-    delete item._km; delete item._m;
-    refreshEditorList('crossings');
-    draw();
-});
-setupAutoApply('crossings', [
-    ['sel-cr-name', 'label'],
-    ['sel-cr-km', '_km', parseInt],
-    ['sel-cr-m', '_m', parseInt]
-]);
-debounceAutoApply('crossings', (item) => {
-    item.position = toPos(item._km, item._m);
-});
+];
+setupSaveHandler('crossings', crossingsFields, ppSinglePos);
+setupAutoApply('crossings', crossingsFields);
+debounceAutoApply('crossings', liveSinglePos);
 
-setupSaveHandler('recommendations', [
+const recommendationsFields = [
     ['sel-rc-start-km', '_skm', parseInt],
     ['sel-rc-start-m', '_sm', parseInt],
     ['sel-rc-end-km', '_ekm', parseInt],
     ['sel-rc-end-m', '_em', parseInt],
     ['sel-rc-category', 'category'],
     ['sel-rc-text', 'text']
-]);
-document.querySelector('[data-save="recommendations"]').addEventListener('click', () => {
-    const item = findItemById('recommendations', state.selectedId);
-    if (!item) return;
-    saveSnapshot();
-    item.startPos = toPos(item._skm, item._sm);
-    item.endPos = toPos(item._ekm, item._em);
-    delete item._skm; delete item._sm; delete item._ekm; delete item._em;
-    state.data.recommendations.sort((a, b) => a.startPos - b.startPos);
-    refreshEditorList('recommendations');
-    draw();
-});
-setupAutoApply('recommendations', [
-    ['sel-rc-start-km', '_skm', parseInt],
-    ['sel-rc-start-m', '_sm', parseInt],
-    ['sel-rc-end-km', '_ekm', parseInt],
-    ['sel-rc-end-m', '_em', parseInt],
-    ['sel-rc-category', 'category'],
-    ['sel-rc-text', 'text']
-]);
-debounceAutoApply('recommendations', (item) => {
-    item.startPos = toPos(item._skm, item._sm);
-    item.endPos = toPos(item._ekm, item._em);
-});
+];
+setupSaveHandler('recommendations', recommendationsFields, ppRange);
+setupAutoApply('recommendations', recommendationsFields);
+debounceAutoApply('recommendations', liveRange);
 
-setupSaveHandler('speedLimits', [
+const speedLimitsFields = [
     ['sel-sp-start-km', '_skm', parseInt],
     ['sel-sp-start-m', '_sm', parseInt],
     ['sel-sp-end-km', '_ekm', parseInt],
     ['sel-sp-end-m', '_em', parseInt],
     ['sel-sp-speed', 'speed', parseInt],
     ['sel-sp-remark', 'remark']
-]);
-document.querySelector('[data-save="speedLimits"]').addEventListener('click', () => {
-    const item = findItemById('speedLimits', state.selectedId);
-    if (!item) return;
-    saveSnapshot();
-    item.startPos = toPos(item._skm, item._sm);
-    item.endPos = toPos(item._ekm, item._em);
-    delete item._skm; delete item._sm; delete item._ekm; delete item._em;
-    state.data.speedLimits.sort((a, b) => a.startPos - b.startPos);
-    refreshEditorList('speedLimits');
-    draw();
-});
-setupAutoApply('speedLimits', [
-    ['sel-sp-start-km', '_skm', parseInt],
-    ['sel-sp-start-m', '_sm', parseInt],
-    ['sel-sp-end-km', '_ekm', parseInt],
-    ['sel-sp-end-m', '_em', parseInt],
-    ['sel-sp-speed', 'speed', parseInt],
-    ['sel-sp-remark', 'remark']
-]);
-debounceAutoApply('speedLimits', (item) => {
-    item.startPos = toPos(item._skm, item._sm);
-    item.endPos = toPos(item._ekm, item._em);
-});
+];
+setupSaveHandler('speedLimits', speedLimitsFields, ppRange);
+setupAutoApply('speedLimits', speedLimitsFields);
+debounceAutoApply('speedLimits', liveRange);
 
 // ============================================================
 // LEGEND TOGGLE
