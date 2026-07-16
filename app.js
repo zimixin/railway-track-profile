@@ -111,22 +111,22 @@ function loadDemo() {
 // ============================================================
 // UNDO / REDO
 // ============================================================
-const history = { stack: [], index: -1, maxSize: 50 };
+const undoHistory = { stack: [], index: -1, maxSize: 50 };
 
 function saveSnapshot() {
-    if (history.index < history.stack.length - 1) {
-        history.stack = history.stack.slice(0, history.index + 1);
+    if (undoHistory.index < undoHistory.stack.length - 1) {
+        undoHistory.stack = undoHistory.stack.slice(0, undoHistory.index + 1);
     }
-    history.stack.push(JSON.parse(JSON.stringify(state.data)));
-    if (history.stack.length > history.maxSize) history.stack.shift();
-    history.index = history.stack.length - 1;
+    undoHistory.stack.push(JSON.parse(JSON.stringify(state.data)));
+    if (undoHistory.stack.length > undoHistory.maxSize) undoHistory.stack.shift();
+    undoHistory.index = undoHistory.stack.length - 1;
     saveToLocalStorage();
 }
 
 function undo() {
-    if (history.index <= 0) return;
-    history.index--;
-    state.data = JSON.parse(JSON.stringify(history.stack[history.index]));
+    if (undoHistory.index <= 0) return;
+    undoHistory.index--;
+    state.data = JSON.parse(JSON.stringify(undoHistory.stack[undoHistory.index]));
     state.selectedId = null; state.selectedType = null;
     closeSelectedEditor();
     ['stations', 'signals', 'elevations', 'slopes', 'curves', 'crossings', 'recommendations', 'speedLimits'].forEach(refreshEditorList);
@@ -134,9 +134,9 @@ function undo() {
 }
 
 function redo() {
-    if (history.index >= history.stack.length - 1) return;
-    history.index++;
-    state.data = JSON.parse(JSON.stringify(history.stack[history.index]));
+    if (undoHistory.index >= undoHistory.stack.length - 1) return;
+    undoHistory.index++;
+    state.data = JSON.parse(JSON.stringify(undoHistory.stack[undoHistory.index]));
     state.selectedId = null; state.selectedType = null;
     closeSelectedEditor();
     ['stations', 'signals', 'elevations', 'slopes', 'curves', 'crossings', 'recommendations', 'speedLimits'].forEach(refreshEditorList);
@@ -979,8 +979,6 @@ function drawSpeedGraph(sy) {
     ctx.fillText('км/ч', MARGIN.left - 6, yTop + 10);
 
     // Build continuous stepped line with overlap resolution (min speed wins)
-    const sorted = [...limits].sort((a, b) => a.startPos - b.startPos);
-    
     // Collect all unique breakpoints
     const breaks = new Set();
     limits.forEach(l => { breaks.add(l.startPos); breaks.add(l.endPos); });
@@ -1007,7 +1005,7 @@ function drawSpeedGraph(sy) {
 
     // Build polyline points — always push both points per segment
     const polyPoints = [];
-    segments.forEach((seg, idx) => {
+    segments.forEach((seg) => {
         const x1 = positionToX(seg.from);
         const x2 = positionToX(seg.to);
         const y = yBottom - (seg.speed / speedRange) * bandH;
@@ -1285,7 +1283,6 @@ function findSpeedLimitAt(mx, my) {
     const sy = sectionY();
     const yTop = sy.speedTop + 2;
     const yBottom = sy.speedBottom - 2;
-    const bandH = yBottom - yTop;
     for (const limit of state.data.speedLimits) {
         const x1 = positionToX(limit.startPos);
         const x2 = positionToX(limit.endPos);
@@ -1312,7 +1309,6 @@ function findStationBoundaryAt(mx, my) {
     for (const st of state.data.stations) {
         const xStart = positionToX(st.start);
         const xEnd = positionToX(st.end);
-        const xPos = positionToX(st.position);
         if (Math.abs(mx - xStart) < 8 && my >= sy.profileTop && my <= sy.slopeBottom) {
             return { type: 'start', item: st };
         }
@@ -1602,7 +1598,7 @@ let ctxKm = null; // km position clicked
 
 canvas.addEventListener('contextmenu', (e) => {
     e.preventDefault();
-    const { x, y } = getMousePos(e);
+    const { x } = getMousePos(e);
     ctxKm = Math.round(xToPosition(x) * 1000) / 1000;
 
     // Position menu at mouse
@@ -2072,6 +2068,7 @@ setupSaveHandler('crossings', [
 document.querySelector('[data-save="crossings"]').addEventListener('click', () => {
     const item = findItemById('crossings', state.selectedId);
     if (!item) return;
+    saveSnapshot();
     item.position = toPos(item._km, item._m);
     delete item._km; delete item._m;
     refreshEditorList('crossings');
@@ -2097,6 +2094,7 @@ setupSaveHandler('recommendations', [
 document.querySelector('[data-save="recommendations"]').addEventListener('click', () => {
     const item = findItemById('recommendations', state.selectedId);
     if (!item) return;
+    saveSnapshot();
     item.startPos = toPos(item._skm, item._sm);
     item.endPos = toPos(item._ekm, item._em);
     delete item._skm; delete item._sm; delete item._ekm; delete item._em;
@@ -2128,6 +2126,7 @@ setupSaveHandler('speedLimits', [
 document.querySelector('[data-save="speedLimits"]').addEventListener('click', () => {
     const item = findItemById('speedLimits', state.selectedId);
     if (!item) return;
+    saveSnapshot();
     item.startPos = toPos(item._skm, item._sm);
     item.endPos = toPos(item._ekm, item._em);
     delete item._skm; delete item._sm; delete item._ekm; delete item._em;
@@ -2460,7 +2459,7 @@ function refreshEditorList(type) {
         : state.data[type];
 
     items.forEach(item => {
-        const label = renderLabel(type, item, typeColors, categoryColors);
+        const label = renderLabel(type, item);
         const color = renderColor(type, item, typeColors, categoryColors);
         const row = document.createElement('div');
         row.className = 'item-row' + (state.selectedId === item.id ? ' selected' : '');
@@ -2496,7 +2495,7 @@ function renderColor(type, item, typeColors, categoryColors) {
     return '#8b949e';
 }
 
-function renderLabel(type, item, typeColors, categoryColors) {
+function renderLabel(type, item) {
     if (type === 'stations') return `${item.name} · ${formatPos(item.position)}`;
     if (type === 'signals') return `${item.label} · ${formatPos(item.position)}${item.station ? ' · ' + item.station : ''}`;
     if (type === 'elevations') return `${formatPos(item.position)} → <b>${item.y}м</b>`;
